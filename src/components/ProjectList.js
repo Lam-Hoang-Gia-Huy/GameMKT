@@ -221,25 +221,41 @@ const ProjectList = () => {
             <Row gutter={[16, 16]}>
               <Col xs={24} sm={12} md={6}>
                 <Form.Item name="MinMinimumAmount" label="Min Funding Goal">
-                  <InputNumber min={0} style={{ width: "100%" }} />
+                  <InputNumber
+                    min={0}
+                    style={{ width: "100%" }}
+                    placeholder="Input min goal"
+                  />
                 </Form.Item>
               </Col>
 
               <Col xs={24} sm={12} md={6}>
                 <Form.Item name="MaxMinimumAmount" label="Max Funding Goal">
-                  <InputNumber min={0} style={{ width: "100%" }} />
+                  <InputNumber
+                    min={0}
+                    style={{ width: "100%" }}
+                    placeholder="Input max goal"
+                  />
                 </Form.Item>
               </Col>
 
               <Col xs={24} sm={12} md={6}>
                 <Form.Item name="MinTotalAmount" label="Min Pledged Amount">
-                  <InputNumber min={0} style={{ width: "100%" }} />
+                  <InputNumber
+                    min={0}
+                    style={{ width: "100%" }}
+                    placeholder="Input min amount"
+                  />
                 </Form.Item>
               </Col>
 
               <Col xs={24} sm={12} md={6}>
                 <Form.Item name="MaxTotalAmount" label="Max Pledged Amount">
-                  <InputNumber min={0} style={{ width: "100%" }} />
+                  <InputNumber
+                    min={0}
+                    style={{ width: "100%" }}
+                    placeholder="Input max amount"
+                  />
                 </Form.Item>
               </Col>
             </Row>
