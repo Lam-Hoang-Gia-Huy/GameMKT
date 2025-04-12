@@ -73,7 +73,6 @@ const ProjectFaqs = ({ isCreator = false }) => {
       message.error("Question cannot be empty");
       return;
     }
-
     if (!newAnswer.trim()) {
       message.error("Answer cannot be empty");
       return;
@@ -89,7 +88,6 @@ const ProjectFaqs = ({ isCreator = false }) => {
         setAddFaqModalVisible(false);
         await fetchFaqs();
 
-        // Expand the newly added FAQ
         const updatedFaqs = await getFaqsByProjectId(id);
         if (updatedFaqs.data.success) {
           const newFaqIndex = updatedFaqs.data.data.findIndex(
@@ -112,7 +110,10 @@ const ProjectFaqs = ({ isCreator = false }) => {
 
   const handleEditFaq = async () => {
     if (!currentFaq) return;
-
+    if (!currentFaq.question.trim()) {
+      message.error("Question cannot be empty");
+      return;
+    }
     if (!editAnswer.trim()) {
       message.error("Answer cannot be empty");
       return;
@@ -122,7 +123,7 @@ const ProjectFaqs = ({ isCreator = false }) => {
     try {
       const response = await updateFaq(
         id,
-        currentFaq.question,
+        currentFaq.originalQuestion,
         currentFaq.question,
         editAnswer
       );
@@ -157,7 +158,7 @@ const ProjectFaqs = ({ isCreator = false }) => {
   };
 
   const openEditModal = (faq) => {
-    setCurrentFaq(faq);
+    setCurrentFaq({ ...faq, originalQuestion: faq.question });
     setEditAnswer(faq.answer);
     setEditFaqModalVisible(true);
   };
@@ -317,7 +318,7 @@ const ProjectFaqs = ({ isCreator = false }) => {
 
       {/* Edit FAQ Modal */}
       <Modal
-        title="Edit FAQ Answer"
+        title="Edit FAQ"
         open={editFaqModalVisible}
         onCancel={() => setEditFaqModalVisible(false)}
         footer={[
@@ -330,24 +331,25 @@ const ProjectFaqs = ({ isCreator = false }) => {
             loading={submitting}
             onClick={handleEditFaq}
           >
-            Update Answer
+            Update FAQ
           </Button>,
         ]}
         width={800}
       >
         {currentFaq && (
           <Form layout="vertical">
-            <Form.Item label="Question">
-              <Input value={currentFaq.question} disabled />
-              <Text type="secondary" style={{ display: "block", marginTop: 4 }}>
-                Questions cannot be edited once created
-              </Text>
+            <Form.Item label="Question" required>
+              <Input
+                value={currentFaq.question}
+                onChange={(e) =>
+                  setCurrentFaq((prev) => ({
+                    ...prev,
+                    question: e.target.value,
+                  }))
+                }
+              />
             </Form.Item>
-            <Form.Item
-              label="Answer"
-              required
-              rules={[{ required: true, message: "Please enter an answer" }]}
-            >
+            <Form.Item label="Answer" required>
               <div
                 style={{
                   border: "1px solid #d9d9d9",

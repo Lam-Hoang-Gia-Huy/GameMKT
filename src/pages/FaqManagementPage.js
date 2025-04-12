@@ -53,6 +53,7 @@ const FaqManagementPage = () => {
   const [editAnswer, setEditAnswer] = useState("");
   const [loading, setLoading] = useState(false);
   const [addingFaq, setAddingFaq] = useState(false);
+  const [editQuestion, setEditQuestion] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -119,17 +120,18 @@ const FaqManagementPage = () => {
 
   const startEditing = (faq) => {
     setEditingId(faq.question);
+    setEditQuestion(faq.question);
     setEditAnswer(faq.answer);
   };
 
   const handleUpdateFaq = async () => {
-    if (!editAnswer.trim()) {
-      message.warning("Answer cannot be empty");
+    if (!editAnswer.trim() || !editQuestion.trim()) {
+      message.warning("Both question and answer are required");
       return;
     }
 
     try {
-      await updateFaq(selectedProjectId, editingId, editingId, editAnswer);
+      await updateFaq(selectedProjectId, editingId, editQuestion, editAnswer);
       setEditingId(null);
       message.success("FAQ updated successfully");
       fetchFaqs(selectedProjectId);
@@ -324,10 +326,20 @@ const FaqManagementPage = () => {
                   <List.Item.Meta title={<Text strong>{faq.question}</Text>} />
                   {editingId === faq.question ? (
                     <div className="edit-answer-section">
+                      <div style={{ marginBottom: 12 }}>
+                        <Text strong>Question:</Text>
+                        <Input
+                          value={editQuestion}
+                          onChange={(e) => setEditQuestion(e.target.value)}
+                          placeholder="Enter new question"
+                        />
+                      </div>
+
                       <TipTapEditor
                         content={editAnswer}
                         setContent={setEditAnswer}
                       />
+
                       <div style={{ marginTop: 16, textAlign: "right" }}>
                         <Space>
                           <Button onClick={() => setEditingId(null)}>

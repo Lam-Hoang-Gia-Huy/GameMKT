@@ -16,6 +16,7 @@ import {
   FileOutlined,
   DollarOutlined,
   QuestionCircleOutlined,
+  UsergroupAddOutlined,
 } from "@ant-design/icons";
 import Logo from "../../assets/logo.png";
 
@@ -112,6 +113,13 @@ const HeaderBar = () => {
       icon: <FileOutlined />,
       label: "My Files",
       path: "/files",
+      roles: ["CUSTOMER"],
+    },
+    {
+      key: "collabprojects",
+      icon: <UsergroupAddOutlined />,
+      label: "My Collab Projects",
+      path: "/my-editor-projects",
       roles: ["CUSTOMER"],
     },
   ];

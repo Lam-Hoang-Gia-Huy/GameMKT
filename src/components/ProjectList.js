@@ -7,23 +7,36 @@ import {
   Empty,
   Alert,
   Select,
-  message,
+  Button,
+  Form,
+  Input,
+  InputNumber,
+  DatePicker,
+  Collapse,
 } from "antd";
 import ProjectCard from "./ProjectCard";
-import { fetchProjects, fetchAllCategories } from "../api/apiClient";
-import { apiAuth } from "../api/apiClient";
+import {
+  fetchAllCategories,
+  fetchAllPlatforms,
+  fetchProjects,
+} from "../api/apiClient";
+import dayjs from "dayjs";
 
 const { Option } = Select;
+const { RangePicker } = DatePicker;
+const { Panel } = Collapse;
 
 const ProjectList = () => {
   const [projects, setProjects] = useState([]);
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [platforms, setPlatforms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
+  const [form] = Form.useForm();
+
   const sortProjectsByStatus = (projects) => {
     const now = new Date();
 
@@ -39,13 +52,22 @@ const ProjectList = () => {
       return aStatus - bStatus;
     });
   };
-  const loadProjects = useCallback(async () => {
+
+  const loadProjects = useCallback(async (filters = {}) => {
     try {
       setLoading(true);
-      const [projectsResponse, categoriesResponse] = await Promise.all([
-        fetchProjects(),
-        fetchAllCategories(),
-      ]);
+
+      const defaultFilters = {
+        Status: "ONGOING",
+        ...filters,
+      };
+
+      const [projectsResponse, categoriesResponse, platformsResponse] =
+        await Promise.all([
+          fetchProjects(defaultFilters),
+          fetchAllCategories(),
+          fetchAllPlatforms(),
+        ]);
 
       const projectsData = projectsResponse?.data?.data || [];
       const sortedData = sortProjectsByStatus(projectsData);
@@ -55,11 +77,14 @@ const ProjectList = () => {
       const categoriesData = categoriesResponse?.data?.data || [];
       setCategories(categoriesData);
 
+      const platformsData = platformsResponse?.data?.data || [];
+      setPlatforms(platformsData);
+
       setError(null);
     } catch (error) {
-      console.error("Lỗi khi lấy dữ liệu:", error);
+      console.error("Error fetching data:", error);
       setError(
-        "Đã xảy ra lỗi khi kết nối với máy chủ dữ liệu. Vui lòng thử lại sau."
+        "An error occurred while connecting to the data server. Please try again later."
       );
     } finally {
       setLoading(false);
@@ -70,40 +95,20 @@ const ProjectList = () => {
     loadProjects();
   }, [loadProjects]);
 
-  // Hàm filter projects theo category
-  const filterProjectsByCategory = useCallback(
-    (categoryId) => {
-      if (!categoryId) {
-        setFilteredProjects(projects); // Nếu không chọn category thì hiển thị tất cả
-        return;
-      }
+  const handleFilterSubmit = (values) => {
+    const filters = {
+      ...values,
+      Status: "ONGOING",
+    };
 
-      // Gọi API để lấy projects theo category
-      const fetchProjectsByCategory = async () => {
-        try {
-          setLoading(true);
-          const response = await apiAuth.get(
-            `/api/Category/GetAllProjectByCategoryId?categoryId=${categoryId}`
-          );
-          const filteredData = response?.data?.data || [];
-          setFilteredProjects(filteredData);
-        } catch (error) {
-          console.error("Lỗi khi lọc dự án theo danh mục:", error);
-          message.error("Lỗi khi lọc dự án theo danh mục");
-        } finally {
-          setLoading(false);
-        }
-      };
+    loadProjects(filters);
+    setCurrentPage(1);
+  };
 
-      fetchProjectsByCategory();
-    },
-    [projects]
-  );
-
-  const handleCategoryChange = (value) => {
-    setSelectedCategory(value);
-    setCurrentPage(1); // Reset về trang đầu tiên khi filter
-    filterProjectsByCategory(value);
+  const handleResetFilters = () => {
+    form.resetFields();
+    loadProjects({ Status: "ONGOING" });
+    setCurrentPage(1);
   };
 
   const handlePageChange = (page, pageSizeValue) => {
@@ -133,32 +138,127 @@ const ProjectList = () => {
   if (error)
     return (
       <div style={{ textAlign: "center", padding: "50px 0" }}>
-        <Alert message="Lỗi" description={error} type="error" showIcon />
+        <Alert message="Error" description={error} type="error" showIcon />
       </div>
     );
 
   return (
     <div>
-      {/* Thêm dropdown chọn category */}
-      <div style={{ marginBottom: 20 }}>
-        <Select
-          style={{ width: 200 }}
-          placeholder="Select category"
-          onChange={handleCategoryChange}
-          value={selectedCategory}
-          allowClear
-        >
-          <Option value={null}>All categories</Option>
-          {categories.map((category) => (
-            <Option
-              key={category["category-id"]}
-              value={category["category-id"]}
-            >
-              {category.name}
-            </Option>
-          ))}
-        </Select>
-      </div>
+      <Collapse
+        defaultActiveKey={["1"]}
+        style={{ marginBottom: 20 }}
+        expandIconPosition="end"
+      >
+        <Panel header="Filter Projects" key="1">
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleFilterSubmit}
+            style={{
+              padding: "16px",
+              backgroundColor: "#f0f2f5",
+              borderRadius: 8,
+            }}
+          >
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={6}>
+                <Form.Item name="Title" label="Title">
+                  <Input placeholder="Search by title" />
+                </Form.Item>
+              </Col>
+
+              <Col xs={24} sm={12} md={6}>
+                <Form.Item name="CategoryIds" label="Categories">
+                  <Select
+                    mode="multiple"
+                    placeholder="Select categories"
+                    allowClear
+                    showSearch
+                    optionFilterProp="children"
+                    style={{ width: "100%" }}
+                  >
+                    {categories.map((category) => (
+                      <Option
+                        key={category["category-id"]}
+                        value={category["category-id"]}
+                      >
+                        {category.name}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              <Col xs={24} sm={12} md={6}>
+                <Form.Item name="PlatformIds" label="Platforms">
+                  <Select
+                    mode="multiple"
+                    placeholder="Select platforms"
+                    allowClear
+                    showSearch
+                    optionFilterProp="children"
+                    style={{ width: "100%" }}
+                  >
+                    {platforms.map((platform) => (
+                      <Option
+                        key={platform["platform-id"]}
+                        value={platform["platform-id"]}
+                      >
+                        {platform.name}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              <Col xs={24} sm={12} md={6}>
+                <Form.Item name="StartDatetimeRange" label="Start Date Range">
+                  <RangePicker style={{ width: "100%" }} />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={6}>
+                <Form.Item name="MinMinimumAmount" label="Min Funding Goal">
+                  <InputNumber min={0} style={{ width: "100%" }} />
+                </Form.Item>
+              </Col>
+
+              <Col xs={24} sm={12} md={6}>
+                <Form.Item name="MaxMinimumAmount" label="Max Funding Goal">
+                  <InputNumber min={0} style={{ width: "100%" }} />
+                </Form.Item>
+              </Col>
+
+              <Col xs={24} sm={12} md={6}>
+                <Form.Item name="MinTotalAmount" label="Min Pledged Amount">
+                  <InputNumber min={0} style={{ width: "100%" }} />
+                </Form.Item>
+              </Col>
+
+              <Col xs={24} sm={12} md={6}>
+                <Form.Item name="MaxTotalAmount" label="Max Pledged Amount">
+                  <InputNumber min={0} style={{ width: "100%" }} />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={[16, 16]} justify="end">
+              <Col>
+                <Button type="primary" htmlType="submit">
+                  Apply Filters
+                </Button>
+              </Col>
+              <Col>
+                <Button onClick={handleResetFilters} style={{ marginLeft: 8 }}>
+                  Reset
+                </Button>
+              </Col>
+            </Row>
+          </Form>
+        </Panel>
+      </Collapse>
 
       {filteredProjects.length === 0 ? (
         <div style={{ textAlign: "center", padding: "50px 0" }}>

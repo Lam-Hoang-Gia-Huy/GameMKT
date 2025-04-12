@@ -1,4 +1,5 @@
 import axios from "axios";
+import qs from "qs";
 
 const apiClient = axios.create({
   baseURL: "https://6656dd4e9f970b3b36c6e348.mockapi.io",
@@ -6,12 +7,7 @@ const apiClient = axios.create({
     "Content-Type": "application/json",
   },
 });
-const apiClient1 = axios.create({
-  baseURL: "https://67b02665dffcd88a67887a70.mockapi.io/",
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+
 const apiBase = axios.create({
   baseURL: "https://marvelous-gentleness-production.up.railway.app",
   headers: {
@@ -59,7 +55,34 @@ export const staffApproveProject = ({ projectId, status, reason }) => {
     params: { projectId, status, reason },
   });
 };
-export const fetchProjects = () => apiBase.get("/api/Project/GetAllProject");
+export const fetchProjects = (filters = {}) => {
+  const queryParams = {};
+
+  Object.keys(filters).forEach((key) => {
+    if (filters[key] !== undefined && filters[key] !== null) {
+      if (key.includes("Datetime") && filters[key]?.isValid?.()) {
+        queryParams[key] = filters[key].toISOString();
+      } else if (
+        Array.isArray(filters[key]) &&
+        filters[key].every((item) => item?.isValid?.())
+      ) {
+        queryParams[`Min${key}`] = filters[key][0].toISOString();
+        queryParams[`Max${key}`] = filters[key][1].toISOString();
+      } else if (key === "CategoryIds" || key === "PlatformIds") {
+        // Ensure arrays are passed as-is for qs to handle
+        queryParams[key] = filters[key];
+      } else {
+        queryParams[key] = filters[key];
+      }
+    }
+  });
+  return apiAuth.get("/api/Project/GetAllProject", {
+    params: queryParams,
+    paramsSerializer: (params) => {
+      return qs.stringify(params, { arrayFormat: "repeat" });
+    },
+  });
+};
 export const fetchProject = (id) =>
   apiBase.get(`/api/Project/GetProjectById?id=${id}`);
 export const createProject = (data) => {
@@ -202,7 +225,7 @@ export const updateFaq = (projectId, oldQuestion, newQuestion, answer) => {
   formData.append("Answer", answer);
 
   return apiAuth.put(
-    `/api/Faq/UpdateFaq?projectId=${projectId}&question=${encodeURIComponent(
+    `/api/Faq/UpdateFaq?projectId=${projectId}&oldQuestion=${encodeURIComponent(
       oldQuestion
     )}`,
     formData,
@@ -245,4 +268,10 @@ export const removeCollaborator = (userId, projectId) => {
     `/api/Collaborator?userId=${userId}&projectId=${projectId}`
   );
 };
+export const fetchAllPlatforms = () =>
+  apiAuth.get("/api/Platform/Platform/GetAll");
 export default apiClient;
+// Đã có trong apiClient.js của bạn
+export const getCollaboratorProjects = (userId) => {
+  return apiAuth.get(`/api/Collaborator/user?userId=${userId}`);
+};

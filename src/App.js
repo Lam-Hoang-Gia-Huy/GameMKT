@@ -24,6 +24,7 @@ import PaymentResult from "./pages/PaymentResult";
 import PledgesPage from "./pages/PledgesPage";
 import FaqManagementPage from "./pages/FaqManagementPage";
 import CollaboratorManagementPage from "./pages/CollaboratorManagementPage";
+import EditorProjects from "./pages/EditorProjects";
 
 function App() {
   return (
@@ -70,6 +71,7 @@ function App() {
           <Route path="manage-faqs" element={<FaqManagementPage />} />
           <Route path="edit-project/:projectId" element={<UserEditProject />} />
           <Route path="/pledges" element={<PledgesPage />} />
+          <Route path="/my-editor-projects" element={<EditorProjects />} />
           <Route
             path="manage-collaborators"
             element={<CollaboratorManagementPage />}
