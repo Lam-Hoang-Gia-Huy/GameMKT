@@ -179,7 +179,7 @@ export const getUserFiles = (userId, page = 1, pageSize = 20) =>
 
 export const getFileById = (fileId) => apiAuth.get(`/api/File/file/${fileId}`);
 export const fetchAllCategories = () =>
-  apiAuth.get("/api/Category/GetAllCategory");
+  apiBase.get("/api/Category/GetAllCategory");
 
 export const addCategoryToProject = (projectId, categoryId) => {
   const formData = new FormData();
@@ -269,9 +269,39 @@ export const removeCollaborator = (userId, projectId) => {
   );
 };
 export const fetchAllPlatforms = () =>
-  apiAuth.get("/api/Platform/Platform/GetAll");
-export default apiClient;
-// Đã có trong apiClient.js của bạn
+  apiBase.get("/api/Platform/Platform/GetAll");
+export const addPlatformToProject = (projectId, platformId) => {
+  const formData = new FormData();
+  formData.append("PlatformId", platformId);
+  formData.append("ProjectId", projectId);
+
+  return apiAuth.post("/api/Platform/project/add", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
+export const removePlatformFromProject = (projectId, platformId) => {
+  return apiAuth.delete("/api/Platform/project/delete", {
+    data: {
+      "platform-id": platformId,
+      "project-id": projectId,
+    },
+  });
+};
 export const getCollaboratorProjects = (userId) => {
   return apiAuth.get(`/api/Collaborator/user?userId=${userId}`);
 };
+export const resendConfirmationEmail = (email) => {
+  return apiBase.post(
+    `/api/Authentication/resend?sEmail=${encodeURIComponent(email)}`,
+    null,
+    {
+      headers: {
+        Accept: "*/*",
+      },
+    }
+  );
+};
+export default apiClient;

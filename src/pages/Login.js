@@ -6,22 +6,26 @@ const { Content } = Layout;
 
 function Login() {
   return (
-    <Layout class="flex w-screen min-h-screen">
+    <Layout className="flex w-screen min-h-screen">
       <Layout>
-        <Content class="flex flex-col relative bg-steam overflow-x-hidden xl:overflow-y-hidden">
-          <div class="absolute inset-0 w-full h-full ">
+        <Content className="flex flex-col relative overflow-hidden">
+          <div className="absolute inset-0 w-full h-full">
             <img
               src={background}
-              class="hidden md:block w-full h-full object-top object-cover xl:object-scale-down"
+              className="w-full h-full object-cover"
+              alt="background"
             />
+            <div className="absolute inset-0 bg-black bg-opacity-30"></div>
           </div>
-
-          <div className="relative z-10 flex justify-center items-start min-h-screen mt-10 shadow-2xl">
-            <LoginForm />
+          <div className="relative z-10 flex justify-center items-center min-h-screen p-4">
+            <div className="w-full max-w-2xl bg-opacity-90 rounded-xl shadow-2xl p-8 sm:p-10">
+              <LoginForm />
+            </div>
           </div>
         </Content>
       </Layout>
     </Layout>
   );
 }
+
 export default Login;

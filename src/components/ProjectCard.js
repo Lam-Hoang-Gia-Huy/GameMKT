@@ -1,18 +1,11 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Card, Tag, Button, Row, Col, Progress, Typography, Spin } from "antd";
+import React, { useMemo } from "react";
+import { Card, Tag, Button, Row, Col, Progress, Typography } from "antd";
 import { Link } from "react-router-dom";
 import placeholder from "../assets/placeholder-1-1-1.png";
-import { fetchProjectCategories } from "../api/apiClient";
 
 const { Title, Text } = Typography;
 
-const categoriesCache = {};
-
 const ProjectCard = ({ project }) => {
-  const [categories, setCategories] = useState([]);
-  const [loadingCategories, setLoadingCategories] = useState(false);
-  const mountedRef = useRef(true);
-
   const { statusText, daysValue, progressPercentage } = useMemo(() => {
     const now = new Date();
     const startDate = new Date(project["start-datetime"]);
@@ -42,43 +35,6 @@ const ProjectCard = ({ project }) => {
     ).toFixed(1);
 
     return { statusText, daysValue, progressPercentage };
-  }, [project]);
-
-  useEffect(() => {
-    mountedRef.current = true;
-
-    const loadCategories = async () => {
-      const projectId = project["project-id"];
-      if (categoriesCache[projectId]) {
-        setCategories(categoriesCache[projectId]);
-        return;
-      }
-
-      try {
-        setLoadingCategories(true);
-        const response = await fetchProjectCategories(projectId);
-        const categoriesData = response.data.data || [];
-        categoriesCache[projectId] = categoriesData;
-        if (mountedRef.current) {
-          setCategories(categoriesData);
-        }
-      } catch (error) {
-        console.error(
-          `Failed to load categories for project ${projectId}`,
-          error
-        );
-      } finally {
-        if (mountedRef.current) {
-          setLoadingCategories(false);
-        }
-      }
-    };
-
-    loadCategories();
-
-    return () => {
-      mountedRef.current = false;
-    };
   }, [project]);
 
   const thumbnail = useMemo(() => {
@@ -119,26 +75,46 @@ const ProjectCard = ({ project }) => {
       <Title level={4}>{project?.title}</Title>
       <Text type="secondary">by {project?.creator}</Text>
 
-      {loadingCategories ? (
-        <Spin size="small" style={{ margin: "8px 0" }} />
-      ) : (
-        categories.length > 0 && (
-          <div
-            style={{
-              margin: "8px 0",
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 4,
-            }}
-          >
-            {categories.slice(0, 3).map((category) => (
-              <Tag key={category["category-id"]} color="blue">
-                {category.name}
-              </Tag>
-            ))}
-            {categories.length > 3 && <Tag>+{categories.length - 3}</Tag>}
-          </div>
-        )
+      {/* Hiển thị categories */}
+      {project.categories?.length > 0 && (
+        <div
+          style={{
+            margin: "8px 0",
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 4,
+          }}
+        >
+          {project.categories.slice(0, 3).map((category) => (
+            <Tag key={category["category-id"]} color="blue">
+              {category.name}
+            </Tag>
+          ))}
+          {project.categories.length > 3 && (
+            <Tag>+{project.categories.length - 3}</Tag>
+          )}
+        </div>
+      )}
+
+      {/* Hiển thị platforms */}
+      {project.platforms?.length > 0 && (
+        <div
+          style={{
+            margin: "8px 0",
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 4,
+          }}
+        >
+          {project.platforms.slice(0, 3).map((platform) => (
+            <Tag key={platform["platform-id"]} color="green">
+              {platform.name}
+            </Tag>
+          ))}
+          {project.platforms.length > 3 && (
+            <Tag>+{project.platforms.length - 3}</Tag>
+          )}
+        </div>
       )}
 
       <Text style={{ display: "block", margin: "16px 0", minHeight: "50px" }}>

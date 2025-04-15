@@ -16,6 +16,7 @@ import {
   Spin,
   Select,
   Image,
+  Tag,
   Card,
   Divider,
   Row,
@@ -25,6 +26,7 @@ import {
 import { UploadOutlined, SaveOutlined } from "@ant-design/icons";
 import TipTapEditor from "../components/TipTapEditor";
 import CategorySelector from "../components/MyProjectListPage/CategorySelector";
+import PlatformSelector from "../components/MyProjectListPage/PlatformSelector";
 import moment from "moment";
 
 const { TextArea } = Input;
@@ -36,6 +38,8 @@ const UserEditProject = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(true);
   const [story, setStory] = useState("");
+  const [projectPlatforms, setProjectPlatforms] = useState([]);
+  const [projectCategories, setProjectCategories] = useState([]);
   const [thumbnail, setThumbnail] = useState(null);
   const [currentThumbnail, setCurrentThumbnail] = useState(null);
   const [storyLoaded, setStoryLoaded] = useState(false);
@@ -56,7 +60,8 @@ const UserEditProject = () => {
           endDatetime: moment(project["end-datetime"]),
           minimumAmount: project["minimum-amount"],
         });
-
+        setProjectPlatforms(project.platforms || []);
+        setProjectCategories(project.categories || []);
         setStory(project.story || "");
         setStoryLoaded(true);
         setCurrentThumbnail(project.thumbnail);
@@ -227,7 +232,45 @@ const UserEditProject = () => {
                   </Button>
                 </Form.Item>
                 <Form.Item label="Categories">
-                  <CategorySelector projectId={projectId} />
+                  <div style={{ marginTop: 8 }}>
+                    {projectCategories.map((category) => (
+                      <Tag
+                        key={category["category-id"]}
+                        color="blue"
+                        style={{ marginBottom: 4 }}
+                      >
+                        {category.name}
+                      </Tag>
+                    ))}
+                    <CategorySelector
+                      projectId={projectId}
+                      initialCategories={projectCategories}
+                      onUpdate={(newCategories) =>
+                        setProjectCategories(newCategories)
+                      }
+                    />
+                  </div>
+                </Form.Item>
+
+                <Form.Item label="Platforms">
+                  <div style={{ marginTop: 8 }}>
+                    {projectPlatforms.map((platform) => (
+                      <Tag
+                        key={platform["platform-id"]}
+                        color="green"
+                        style={{ marginBottom: 4 }}
+                      >
+                        {platform.name}
+                      </Tag>
+                    ))}
+                    <PlatformSelector
+                      projectId={projectId}
+                      initialPlatforms={projectPlatforms}
+                      onUpdate={(newPlatforms) =>
+                        setProjectPlatforms(newPlatforms)
+                      }
+                    />
+                  </div>
                 </Form.Item>
               </Form>
             </Card>

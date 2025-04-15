@@ -11,6 +11,7 @@ import {
   Upload,
   Select,
   Tag,
+  Tabs,
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import {
@@ -19,10 +20,13 @@ import {
   updateStory,
   fetchAllCategories,
   addCategoryToProject,
+  fetchAllPlatforms,
+  addPlatformToProject,
 } from "../api/apiClient";
 import TipTapEditor from "../components/TipTapEditor";
 
 const { Step } = Steps;
+const { TabPane } = Tabs;
 
 const CreateProjectForm = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -31,21 +35,29 @@ const CreateProjectForm = () => {
   const [storyContent, setStoryContent] = useState("");
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [allCategories, setAllCategories] = useState([]);
+  const [allPlatforms, setAllPlatforms] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedPlatforms, setSelectedPlatforms] = useState([]);
   const [form] = Form.useForm();
+
   useEffect(() => {
-    const loadCategories = async () => {
+    const loadData = async () => {
       try {
-        const response = await fetchAllCategories();
-        setAllCategories(response.data.data || []);
+        const [categoriesResponse, platformsResponse] = await Promise.all([
+          fetchAllCategories(),
+          fetchAllPlatforms(),
+        ]);
+        setAllCategories(categoriesResponse.data.data || []);
+        setAllPlatforms(platformsResponse.data.data || []);
       } catch (error) {
-        message.error("Failed to load categories");
+        message.error("Failed to load data");
         console.error(error);
       }
     };
 
-    loadCategories();
+    loadData();
   }, []);
+
   const handleNext = async () => {
     if (currentStep === 0) {
       try {
@@ -65,11 +77,6 @@ const CreateProjectForm = () => {
           response.data["project-id"] || response.data?.data?.["project-id"];
         setProjectId(projectId);
 
-        await Promise.all(
-          selectedCategories.map((categoryId) =>
-            addCategoryToProject(projectId, categoryId)
-          )
-        );
         message.success("Project created successfully!");
         setCurrentStep(currentStep + 1);
       } catch (error) {
@@ -101,11 +108,7 @@ const CreateProjectForm = () => {
           await updateStory(projectId, storyContent);
           message.success("Story updated successfully!");
         }
-        message.success("Project setup completed!");
-        form.resetFields();
         setCurrentStep(currentStep + 1);
-        setStoryContent("");
-        setThumbnailFile(null);
       } catch (error) {
         message.error("Failed to update story");
         throw error;
@@ -115,14 +118,30 @@ const CreateProjectForm = () => {
     } else if (currentStep === 3) {
       try {
         setLoading(true);
-        if (selectedCategories.length > 0 && projectId) {
-          await Promise.all(
-            selectedCategories.map((categoryId) =>
+        // Thêm categories và platforms
+        const promises = [];
+
+        if (selectedCategories.length > 0) {
+          promises.push(
+            ...selectedCategories.map((categoryId) =>
               addCategoryToProject(projectId, categoryId)
             )
           );
-          message.success("Categories added successfully!");
         }
+
+        if (selectedPlatforms.length > 0) {
+          promises.push(
+            ...selectedPlatforms.map((platformId) =>
+              addPlatformToProject(projectId, platformId)
+            )
+          );
+        }
+
+        if (promises.length > 0) {
+          await Promise.all(promises);
+          message.success("Categories and platforms added successfully!");
+        }
+
         message.success("Project setup completed!");
         form.resetFields();
         setCurrentStep(0);
@@ -130,6 +149,7 @@ const CreateProjectForm = () => {
         setStoryContent("");
         setThumbnailFile(null);
         setSelectedCategories([]);
+        setSelectedPlatforms([]);
       } catch (error) {
         message.error("Failed to complete project setup");
         throw error;
@@ -141,6 +161,26 @@ const CreateProjectForm = () => {
 
   const handlePrev = () => {
     setCurrentStep(currentStep - 1);
+  };
+
+  const renderSelectedItems = (items, allItems, color) => {
+    return items.length > 0 ? (
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 8 }}>
+        {items.map((id) => {
+          const item = allItems.find(
+            (i) =>
+              ("platform-id" in i ? i["platform-id"] : i["category-id"]) === id
+          );
+          return (
+            <Tag key={id} color={color}>
+              {item?.name || "Unknown"}
+            </Tag>
+          );
+        })}
+      </div>
+    ) : (
+      <span style={{ color: "#999" }}>No items selected</span>
+    );
   };
 
   const steps = [
@@ -236,46 +276,55 @@ const CreateProjectForm = () => {
       ),
     },
     {
-      title: "Categories",
+      title: "Categories & Platforms",
       content: (
         <div>
-          <h3>Select Project Categories</h3>
-          <Select
-            mode="multiple"
-            placeholder="Select categories"
-            value={selectedCategories}
-            onChange={setSelectedCategories}
-            optionLabelProp="label"
-            style={{ width: "100%" }}
-          >
-            {allCategories.map((category) => (
-              <Select.Option
-                key={category["category-id"]}
-                value={category["category-id"]}
-                label={category.name}
+          <Tabs defaultActiveKey="1">
+            <TabPane tab="Categories" key="1">
+              <h3>Select Project Categories</h3>
+              <Select
+                mode="multiple"
+                placeholder="Select categories"
+                value={selectedCategories}
+                onChange={setSelectedCategories}
+                optionLabelProp="label"
+                style={{ width: "100%" }}
               >
-                {category.name}
-              </Select.Option>
-            ))}
-          </Select>
-          <div style={{ marginTop: 16 }}>
-            {selectedCategories.length > 0 ? (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                {selectedCategories.map((catId) => {
-                  const category = allCategories.find(
-                    (c) => c["category-id"] === catId
-                  );
-                  return (
-                    <Tag key={catId} color="blue">
-                      {category?.name || "Unknown"}
-                    </Tag>
-                  );
-                })}
-              </div>
-            ) : (
-              <span style={{ color: "#999" }}>No categories selected</span>
-            )}
-          </div>
+                {allCategories.map((category) => (
+                  <Select.Option
+                    key={category["category-id"]}
+                    value={category["category-id"]}
+                    label={category.name}
+                  >
+                    {category.name}
+                  </Select.Option>
+                ))}
+              </Select>
+              {renderSelectedItems(selectedCategories, allCategories, "blue")}
+            </TabPane>
+            <TabPane tab="Platforms" key="2">
+              <h3>Select Project Platforms</h3>
+              <Select
+                mode="multiple"
+                placeholder="Select platforms"
+                value={selectedPlatforms}
+                onChange={setSelectedPlatforms}
+                optionLabelProp="label"
+                style={{ width: "100%" }}
+              >
+                {allPlatforms.map((platform) => (
+                  <Select.Option
+                    key={platform["platform-id"]}
+                    value={platform["platform-id"]}
+                    label={platform.name}
+                  >
+                    {platform.name}
+                  </Select.Option>
+                ))}
+              </Select>
+              {renderSelectedItems(selectedPlatforms, allPlatforms, "green")}
+            </TabPane>
+          </Tabs>
           <p style={{ marginTop: 16 }}>
             <Button type="link" onClick={handleNext}>
               Skip this step
@@ -319,5 +368,4 @@ const CreateProjectForm = () => {
     </Card>
   );
 };
-
 export default CreateProjectForm;

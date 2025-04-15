@@ -2,16 +2,21 @@ import React, { useState, useRef } from "react";
 import Footer from "../Layout/registerlayout/footer/Footer";
 import ReCAPTCHA from "react-google-recaptcha";
 import axios from "axios";
+import { resendConfirmationEmail } from "../../api/apiClient";
+import { message } from "antd";
 
 const Register = () => {
   const [captchaValue, setCaptchaValue] = useState(null);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(""); // Email for registration
+  const [resendEmail, setResendEmail] = useState(""); // Dedicated email for resend
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullname, setFullname] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [errorList, setErrorList] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(false); // ✅ Ngăn spam nút
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendMsg, setResendMsg] = useState("");
 
   const recaptchaRef = useRef(null);
   const sitekey =
@@ -23,15 +28,16 @@ const Register = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    if (isSubmitting) return; // ✅ Chặn spam nhiều lần
-    setIsSubmitting(true); // ✅ Ngăn người dùng bấm nhiều lần
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     setSuccessMsg("");
     setErrorList([]);
+    setResendMsg("");
 
     if (password !== confirmPassword) {
-      setErrorList(["Mật khẩu và xác nhận mật khẩu không khớp."]);
-      setIsSubmitting(false); // ✅ Mở lại nút nếu có lỗi
+      setErrorList(["Password and Confirm Password do not match."]);
+      setIsSubmitting(false);
       return;
     }
 
@@ -47,7 +53,10 @@ const Register = () => {
       );
 
       setErrorList([]);
-      setSuccessMsg(response.data?.message || "Register successfully!");
+      setSuccessMsg(
+        response.data?.message ||
+          "Registration successful! Please check your email to confirm your account."
+      );
 
       setEmail("");
       setPassword("");
@@ -68,10 +77,36 @@ const Register = () => {
       } else if (data?.message) {
         setErrorList([data.message]);
       } else {
-        setErrorList(["Register unsuccessfully."]);
+        setErrorList(["Registration unsuccessful."]);
       }
     } finally {
-      setIsSubmitting(false); // ✅ Mở lại nút sau khi API phản hồi
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    if (isResending || !resendEmail) return;
+    setIsResending(true);
+    setResendMsg("");
+    setErrorList([]);
+
+    try {
+      const response = await resendConfirmationEmail(resendEmail);
+      setResendMsg(
+        response.data?.message || "Confirmation email resent successfully!"
+      );
+      message.success("Confirmation email resent!");
+    } catch (err) {
+      const data = err.response?.data;
+      if (data?.message) {
+        setErrorList([data.message]);
+        message.error(data.message);
+      } else {
+        setErrorList(["Failed to resend confirmation email."]);
+        message.error("Failed to resend confirmation email.");
+      }
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -84,6 +119,7 @@ const Register = () => {
           </h1>
         </div>
 
+        {/* Registration Form */}
         <form onSubmit={handleRegister}>
           <div className="my-2 space-y-3">
             <InputField
@@ -124,7 +160,6 @@ const Register = () => {
             />
           </div>
 
-          {/* ✅ Nút Tiếp tục: Chỉ bấm được một lần, hiển thị loading */}
           <button
             type="submit"
             className={`mt-2 bg-blue-500 text-white px-4 py-2 rounded w-[200px] 
@@ -139,6 +174,33 @@ const Register = () => {
           </button>
         </form>
 
+        {/* Resend Confirmation Email Section (Always Visible) */}
+        <div className="my-10">
+          <h2 className="text-2xl text-slate-200 mb-4">
+            Resend Confirmation Email
+          </h2>
+          <InputField
+            id="resend-email"
+            label="Email for Resend"
+            type="email"
+            value={resendEmail}
+            onChange={(e) => setResendEmail(e.target.value)}
+          />
+          <button
+            onClick={handleResendEmail}
+            className={`mt-2 bg-blue-500 text-white px-4 py-2 rounded w-[200px] 
+              ${
+                !resendEmail || isResending
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
+            disabled={!resendEmail || isResending}
+          >
+            {isResending ? "Resending..." : "Resend Confirmation Email"}
+          </button>
+        </div>
+
+        {/* Error Messages */}
         {errorList.length > 0 && (
           <div className="text-red-500 my-10 w-[300px] lg:w-[400px] break-words space-y-1">
             {errorList.map((err, idx) => (
@@ -147,9 +209,17 @@ const Register = () => {
           </div>
         )}
 
+        {/* Success Messages */}
         {successMsg && (
           <div className="text-green-500 my-6 w-[300px] lg:w-[400px] text-center">
             <p>{successMsg}</p>
+          </div>
+        )}
+
+        {/* Resend Success Message */}
+        {resendMsg && (
+          <div className="text-green-500 my-6 w-[300px] lg:w-[400px] text-center">
+            <p>{resendMsg}</p>
           </div>
         )}
       </div>
@@ -159,7 +229,6 @@ const Register = () => {
   );
 };
 
-// 🔄 Tái sử dụng component InputField
 const InputField = ({ id, label, type, value, onChange }) => (
   <div className="flex flex-col relative hover:scale-105 transition-transform duration-300">
     <div className="bg-transparent md:bg-steam mb-5">
@@ -170,7 +239,7 @@ const InputField = ({ id, label, type, value, onChange }) => (
           name={id}
           value={value}
           onChange={onChange}
-          className="peer bg-transparent h-10 w-[250px] lg:w-[300px] rounded-lg text-slate-400 placeholder-transparent ring-2 
+          className="peer bg-transparent h-10 w-[300px] rounded-lg text-slate-400 placeholder-transparent ring-2 
                      px-2 ring-gray-500 focus:ring-sky-600 focus:outline-none focus:border-rose-600"
           placeholder=""
         />
