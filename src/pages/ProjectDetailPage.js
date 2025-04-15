@@ -18,8 +18,6 @@ import {
 import {
   ClockCircleOutlined,
   UserOutlined,
-  HeartOutlined,
-  ShareAltOutlined,
   BulbOutlined,
   MessageOutlined,
   QuestionCircleOutlined,
@@ -27,9 +25,9 @@ import {
 import TipTapViewer from "../components/TipTapViewer";
 import placeholder from "../assets/placeholder-1-1-1.png";
 import ProjectSidebar from "../components/ProjectDetailPage/ProjectSidebar";
-import ProjectComments from "../components/ProjectDetailPage/ProjectComments";
+import ProjectComments from "../components/ProjectDetailPage/ProjectComments"; // Verify this path
 import ProjectUpdates from "../components/ProjectDetailPage/ProjectUpdates";
-import ProjectFaqs from "../components/ProjectDetailPage/ProjectFaqs"; // Import the FAQs component
+import ProjectFaqs from "../components/ProjectDetailPage/ProjectFaqs";
 import {
   fetchProject,
   fetchRewardsByProjectId,
@@ -38,6 +36,7 @@ import {
 } from "../api/apiClient";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../components/Hooks/useAuth";
+
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
 
@@ -51,7 +50,7 @@ const ProjectDetailPage = () => {
   const [creator, setCreator] = useState(null);
   const [categories, setCategories] = useState([]);
   const [activeTab, setActiveTab] = useState("1");
-  const [isCreator, setIsCreator] = useState(false); // To check if current user is the creator
+  const [isCreator, setIsCreator] = useState(false);
 
   const handleAddUpdate = (updatedUpdates) => {
     setProject((prevProject) => ({
@@ -79,7 +78,7 @@ const ProjectDetailPage = () => {
               );
               if (creatorResponse.data.success) {
                 setCreator(creatorResponse.data.data);
-                if (auth.id === response.data.data["creator-id"]) {
+                if (auth?.id && auth.id === response.data.data["creator-id"]) {
                   setIsCreator(true);
                 }
               }
@@ -105,7 +104,7 @@ const ProjectDetailPage = () => {
     };
 
     fetchProjectData();
-  }, [id]);
+  }, [id, auth?.id]);
 
   const getTimeStatus = () => {
     if (!project) return { text: "", days: 0 };
@@ -138,11 +137,9 @@ const ProjectDetailPage = () => {
       children: (
         <div className="project-about">
           <TipTapViewer content={project?.story} />
-
           <Divider />
           <Title level={4}>Project Description</Title>
           <Paragraph style={{ fontSize: 16 }}>{project?.description}</Paragraph>
-
           {(creator || project?.creator) && (
             <>
               <Divider />
@@ -223,11 +220,8 @@ const ProjectDetailPage = () => {
       ),
       children: (
         <ProjectComments
-          comments={[]}
-          onAddComment={(content) => console.log("Add Comment:", content)}
-          onEditComment={(id, newContent) =>
-            console.log("Edit Comment:", id, newContent)
-          }
+          projectId={project?.["project-id"] || id}
+          isCreator={isCreator}
         />
       ),
     },
@@ -306,7 +300,6 @@ const ProjectDetailPage = () => {
                     </div>
                   )}
                 </div>
-
                 <Space split={<Divider type="vertical" />}>
                   {(creator || project?.creator) && (
                     <Space>
@@ -327,14 +320,8 @@ const ProjectDetailPage = () => {
                     <UserOutlined /> {project?.backers} backers
                   </Text>
                 </Space>
-                {/* 
-                <Space style={{ width: "100%", justifyContent: "flex-end" }}>
-                  <Button icon={<HeartOutlined />}>Favorite</Button>
-                  <Button icon={<ShareAltOutlined />}>Share</Button>
-                </Space> */}
               </Space>
             </Card>
-
             <Card style={{ border: "black solid 0.5px" }}>
               <Tabs
                 activeKey={activeTab}
@@ -344,7 +331,6 @@ const ProjectDetailPage = () => {
               />
             </Card>
           </Col>
-
           <Col xs={24} lg={8}>
             <ProjectSidebar
               project={{

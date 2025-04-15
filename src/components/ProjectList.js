@@ -20,7 +20,6 @@ import {
   fetchAllPlatforms,
   fetchProjects,
 } from "../api/apiClient";
-import dayjs from "dayjs";
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -28,7 +27,7 @@ const { Panel } = Collapse;
 
 const ProjectList = () => {
   const [projects, setProjects] = useState([]);
-  const [filteredProjects, setFilteredProjects] = useState([]);
+  const [totalItems, setTotalItems] = useState(0);
   const [categories, setCategories] = useState([]);
   const [platforms, setPlatforms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,43 +52,50 @@ const ProjectList = () => {
     });
   };
 
-  const loadProjects = useCallback(async (filters = {}) => {
-    try {
-      setLoading(true);
+  const loadProjects = useCallback(
+    async (filters = {}, page = currentPage, size = pageSize) => {
+      try {
+        setLoading(true);
 
-      const defaultFilters = {
-        Status: "ONGOING",
-        ...filters,
-      };
+        const defaultFilters = {
+          Status: "ONGOING",
+          ...filters,
+        };
 
-      const [projectsResponse, categoriesResponse, platformsResponse] =
-        await Promise.all([
-          fetchProjects(defaultFilters),
-          fetchAllCategories(),
-          fetchAllPlatforms(),
-        ]);
+        const [projectsResponse, categoriesResponse, platformsResponse] =
+          await Promise.all([
+            fetchProjects(defaultFilters, page, size),
+            fetchAllCategories(),
+            fetchAllPlatforms(),
+          ]);
 
-      const projectsData = projectsResponse?.data?.data || [];
-      const sortedData = sortProjectsByStatus(projectsData);
-      setProjects(sortedData);
-      setFilteredProjects(sortedData);
+        // Extract paginated data using the new response structure
+        const projectsData = projectsResponse?.data?.data?.["list-data"] || [];
+        const sortedData = sortProjectsByStatus(projectsData);
+        setProjects(sortedData);
 
-      const categoriesData = categoriesResponse?.data?.data || [];
-      setCategories(categoriesData);
+        // Set total items for pagination
+        const total = projectsResponse?.data?.data?.["total-records"] || 0;
+        setTotalItems(total);
 
-      const platformsData = platformsResponse?.data?.data || [];
-      setPlatforms(platformsData);
+        const categoriesData = categoriesResponse?.data?.data || [];
+        setCategories(categoriesData);
 
-      setError(null);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      setError(
-        "An error occurred while connecting to the data server. Please try again later."
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        const platformsData = platformsResponse?.data?.data || [];
+        setPlatforms(platformsData);
+
+        setError(null);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setError(
+          "An error occurred while connecting to the data server. Please try again later."
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [currentPage, pageSize]
+  );
 
   useEffect(() => {
     loadProjects();
@@ -101,26 +107,22 @@ const ProjectList = () => {
       Status: "ONGOING",
     };
 
-    loadProjects(filters);
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page on filter change
+    loadProjects(filters, 1, pageSize);
   };
 
   const handleResetFilters = () => {
     form.resetFields();
-    loadProjects({ Status: "ONGOING" });
     setCurrentPage(1);
+    loadProjects({ Status: "ONGOING" }, 1, pageSize);
   };
 
   const handlePageChange = (page, pageSizeValue) => {
     setCurrentPage(page);
     setPageSize(pageSizeValue);
+    loadProjects(form.getFieldsValue(), page, pageSizeValue);
     window.scrollTo(0, 0);
   };
-
-  const paginatedProjects = filteredProjects.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
 
   if (loading)
     return (
@@ -276,14 +278,14 @@ const ProjectList = () => {
         </Panel>
       </Collapse>
 
-      {filteredProjects.length === 0 ? (
+      {projects.length === 0 ? (
         <div style={{ textAlign: "center", padding: "50px 0" }}>
           <Empty description="No projects found" />
         </div>
       ) : (
         <>
           <Row gutter={[16, 16]}>
-            {paginatedProjects.map((project) => (
+            {projects.map((project) => (
               <Col key={project["project-id"]} xs={24} sm={12} md={8}>
                 <ProjectCard project={project} />
               </Col>
@@ -294,7 +296,7 @@ const ProjectList = () => {
             <Pagination
               current={currentPage}
               pageSize={pageSize}
-              total={filteredProjects.length}
+              total={totalItems}
               onChange={handlePageChange}
               showSizeChanger
               pageSizeOptions={["6", "12", "18", "24"]}

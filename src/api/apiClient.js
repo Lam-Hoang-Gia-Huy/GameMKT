@@ -55,9 +55,11 @@ export const staffApproveProject = ({ projectId, status, reason }) => {
     params: { projectId, status, reason },
   });
 };
-export const fetchProjects = (filters = {}) => {
-  const queryParams = {};
-
+export const fetchProjects = (filters = {}, pageNumber = 1, pageSize = 6) => {
+  const queryParams = {
+    pageNumber,
+    pageSize,
+  };
   Object.keys(filters).forEach((key) => {
     if (filters[key] !== undefined && filters[key] !== null) {
       if (key.includes("Datetime") && filters[key]?.isValid?.()) {
@@ -69,14 +71,14 @@ export const fetchProjects = (filters = {}) => {
         queryParams[`Min${key}`] = filters[key][0].toISOString();
         queryParams[`Max${key}`] = filters[key][1].toISOString();
       } else if (key === "CategoryIds" || key === "PlatformIds") {
-        // Ensure arrays are passed as-is for qs to handle
         queryParams[key] = filters[key];
       } else {
         queryParams[key] = filters[key];
       }
     }
   });
-  return apiAuth.get("/api/Project/GetAllProject", {
+
+  return apiAuth.get("/api/Project/GetProjectsPaging", {
     params: queryParams,
     paramsSerializer: (params) => {
       return qs.stringify(params, { arrayFormat: "repeat" });
@@ -304,4 +306,28 @@ export const resendConfirmationEmail = (email) => {
     }
   );
 };
+export const fetchCommentsByProjectId = (projectId) =>
+  apiBase.get(`/api/Comment/GetCommentsByProjectId?projectId=${projectId}`);
+
+export const addComment = (projectId, content, parentCommentId = "") => {
+  const formData = new FormData();
+  formData.append("ProjectId", projectId);
+  formData.append("Content", content);
+  formData.append("ParentCommentId", parentCommentId);
+  return apiAuth.post("/api/Comment/project", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
+export const updateComment = (commentId, content) => {
+  const formData = new FormData();
+  formData.append("CommentId", commentId);
+  formData.append("Content", content);
+  return apiAuth.put("/api/Comment/UpdateComment", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
+export const deleteComment = (commentId) =>
+  apiAuth.delete(`/api/Comment/DeleteComment?commentId=${commentId}`);
 export default apiClient;
