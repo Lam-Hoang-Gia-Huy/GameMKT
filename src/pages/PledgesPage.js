@@ -62,10 +62,10 @@ const PledgesPage = () => {
 
   const getStatusTag = (status) => {
     switch (status) {
-      case "ONGOING":
+      case "VISIBLE":
         return (
           <Tag icon={<ClockCircleOutlined />} color="blue">
-            Ongoing
+            VISIBLE
           </Tag>
         );
       case "Hidden":

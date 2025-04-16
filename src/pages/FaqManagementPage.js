@@ -176,7 +176,7 @@ const FaqManagementPage = () => {
         return <Tag color="default">Invisible</Tag>;
       case "HALTED":
         return <Tag color="red">Halted</Tag>;
-      case "ONGOING":
+      case "VISIBLE":
         return <Tag color="blue">On going</Tag>;
       default:
         return <Tag>{status}</Tag>;

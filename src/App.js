@@ -25,7 +25,8 @@ import PledgesPage from "./pages/PledgesPage";
 import FaqManagementPage from "./pages/FaqManagementPage";
 import CollaboratorManagementPage from "./pages/CollaboratorManagementPage";
 import EditorProjects from "./pages/EditorProjects";
-
+import ReportList from "./pages/ReportListPage";
+import CreateReport from "./pages/CreateReportPage";
 function App() {
   return (
     <Routes>
@@ -66,6 +67,8 @@ function App() {
 
         {/* 🔐 Customer routes */}
         <Route element={<RequireAuth roles={["CUSTOMER"]} />}>
+          <Route path="/create-report" element={<CreateReport />} />
+          <Route path="/reports" element={<ReportList />} />
           <Route path="create-project" element={<CreateProjectForm />} />
           <Route path="my-projects" element={<MyProjectList />} />
           <Route path="manage-faqs" element={<FaqManagementPage />} />

@@ -35,6 +35,7 @@ const ProjectList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
   const [form] = Form.useForm();
+  const [isFilterLoaded, setIsFilterLoaded] = useState(false); // Theo dõi trạng thái tải categories/platforms
 
   const sortProjectsByStatus = (projects) => {
     const now = new Date();
@@ -52,41 +53,54 @@ const ProjectList = () => {
     });
   };
 
+  const loadFilters = useCallback(async () => {
+    try {
+      const [categoriesResponse, platformsResponse] = await Promise.all([
+        fetchAllCategories(),
+        fetchAllPlatforms(),
+      ]);
+
+      const categoriesData = categoriesResponse?.data?.data || [];
+      setCategories(categoriesData);
+
+      const platformsData = platformsResponse?.data?.data || [];
+      setPlatforms(platformsData);
+
+      setError(null);
+    } catch (error) {
+      console.error("Error fetching filter data:", error);
+      setError(
+        "An error occurred while loading filter data. Please try again later."
+      );
+    }
+  }, []);
+
   const loadProjects = useCallback(
     async (filters = {}, page = currentPage, size = pageSize) => {
       try {
         setLoading(true);
 
         const defaultFilters = {
-          Status: "ONGOING",
+          Status: "VISIBLE",
           ...filters,
         };
 
-        const [projectsResponse, categoriesResponse, platformsResponse] =
-          await Promise.all([
-            fetchProjects(defaultFilters, page, size),
-            fetchAllCategories(),
-            fetchAllPlatforms(),
-          ]);
+        const projectsResponse = await fetchProjects(
+          defaultFilters,
+          page,
+          size
+        );
 
-        // Extract paginated data using the new response structure
         const projectsData = projectsResponse?.data?.data?.["list-data"] || [];
         const sortedData = sortProjectsByStatus(projectsData);
         setProjects(sortedData);
 
-        // Set total items for pagination
         const total = projectsResponse?.data?.data?.["total-records"] || 0;
         setTotalItems(total);
 
-        const categoriesData = categoriesResponse?.data?.data || [];
-        setCategories(categoriesData);
-
-        const platformsData = platformsResponse?.data?.data || [];
-        setPlatforms(platformsData);
-
         setError(null);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching projects:", error);
         setError(
           "An error occurred while connecting to the data server. Please try again later."
         );
@@ -104,17 +118,17 @@ const ProjectList = () => {
   const handleFilterSubmit = (values) => {
     const filters = {
       ...values,
-      Status: "ONGOING",
+      Status: "VISIBLE",
     };
 
-    setCurrentPage(1); // Reset to first page on filter change
+    setCurrentPage(1);
     loadProjects(filters, 1, pageSize);
   };
 
   const handleResetFilters = () => {
     form.resetFields();
     setCurrentPage(1);
-    loadProjects({ Status: "ONGOING" }, 1, pageSize);
+    loadProjects({ Status: "VISIBLE" }, 1, pageSize);
   };
 
   const handlePageChange = (page, pageSizeValue) => {
@@ -122,6 +136,13 @@ const ProjectList = () => {
     setPageSize(pageSizeValue);
     loadProjects(form.getFieldsValue(), page, pageSizeValue);
     window.scrollTo(0, 0);
+  };
+
+  const handleCollapseChange = (key) => {
+    if (key.includes("1") && !isFilterLoaded) {
+      setIsFilterLoaded(true);
+      loadFilters();
+    }
   };
 
   if (loading)
@@ -147,9 +168,10 @@ const ProjectList = () => {
   return (
     <div>
       <Collapse
-        defaultActiveKey={["1"]}
+        defaultActiveKey={[]} // Mặc định đóng
         style={{ marginBottom: 20 }}
         expandIconPosition="end"
+        onChange={handleCollapseChange} // Gọi khi mở/đóng Collapse
       >
         <Panel header="Filter Projects" key="1">
           <Form
@@ -178,6 +200,7 @@ const ProjectList = () => {
                     showSearch
                     optionFilterProp="children"
                     style={{ width: "100%" }}
+                    loading={!isFilterLoaded} // Hiển thị loading khi chưa tải categories
                   >
                     {categories.map((category) => (
                       <Option
@@ -200,6 +223,7 @@ const ProjectList = () => {
                     showSearch
                     optionFilterProp="children"
                     style={{ width: "100%" }}
+                    loading={!isFilterLoaded} // Hiển thị loading khi chưa tải platforms
                   >
                     {platforms.map((platform) => (
                       <Option

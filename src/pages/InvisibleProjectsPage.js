@@ -37,7 +37,7 @@ const ProjectImage = React.memo(({ thumbnail }) => (
 const StatusTag = React.memo(({ status }) => {
   const statusColors = {
     INVISIBLE: "red",
-    ONGOING: "green",
+    VISIBLE: "green",
     HALTED: "orange",
   };
   return <Tag color={statusColors[status] || "default"}>{status}</Tag>;
@@ -47,7 +47,7 @@ const InvisibleProjects = () => {
   const [projects, setProjects] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedProject, setSelectedProject] = useState(null);
-  const [status, setStatus] = useState("ONGOING");
+  const [status, setStatus] = useState("VISIBLE");
   const [reason, setReason] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -253,7 +253,7 @@ const InvisibleProjects = () => {
           <div>
             <label className="block mb-2">Status</label>
             <Select value={status} onChange={setStatus} className="w-full">
-              <Option value="ONGOING">ONGOING</Option>
+              <Option value="VISIBLE">VISIBLE</Option>
               <Option value="HALTED">HALTED</Option>
             </Select>
           </div>

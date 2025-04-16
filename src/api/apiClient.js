@@ -330,4 +330,12 @@ export const updateComment = (commentId, content) => {
 
 export const deleteComment = (commentId) =>
   apiAuth.delete(`/api/Comment/DeleteComment?commentId=${commentId}`);
+// Report APIs
+export const createReport = (detail) => {
+  return apiAuth.post("/api/Report/CreateReport", { detail });
+};
+
+export const fetchReportsByUserId = () => {
+  return apiAuth.get("/api/Report/GetReportByUserId");
+};
 export default apiClient;

@@ -18,7 +18,7 @@ const AdminProjectListPage = () => {
     //   message.error("Bạn không có quyền hạn để vào. Vui lòng liên hệ với admin !");
     //   return;
     // }
-    
+
     const fetchProjects = async () => {
       if (!auth?.token) {
         return;
@@ -56,7 +56,8 @@ const AdminProjectListPage = () => {
   const handleDelete = async (projectId) => {
     Modal.confirm({
       title: "Xác nhận xóa dự án",
-      content: "Bạn có chắc chắn muốn xóa dự án này? Hành động này không thể hoàn tác!",
+      content:
+        "Bạn có chắc chắn muốn xóa dự án này? Hành động này không thể hoàn tác!",
       okText: "Xóa",
       okType: "danger",
       cancelText: "Hủy",
@@ -116,7 +117,7 @@ const AdminProjectListPage = () => {
       key: "status",
       dataIndex: "status",
       render: (status) => (
-        <Tag color={status === "ONGOING" ? "green" : "red"}>{status}</Tag>
+        <Tag color={status === "VISIBLE" ? "green" : "red"}>{status}</Tag>
       ),
     },
     {

@@ -118,7 +118,7 @@ const ProjectDetailPage = () => {
       return { text: `Starts in ${days} days`, status: "upcoming" };
     } else if (now >= startDate && now <= endDate) {
       const days = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
-      return { text: `${days} days to go`, status: "ongoing" };
+      return { text: `${days} days to go`, status: "VISIBLE" };
     } else {
       return { text: "Funding ended", status: "ended" };
     }

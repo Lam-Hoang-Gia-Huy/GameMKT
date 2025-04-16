@@ -9,6 +9,7 @@ import {
   CheckCircleOutlined,
   ProjectOutlined,
   TeamOutlined,
+  FlagOutlined,
 } from "@ant-design/icons";
 
 const Sidebar = () => {
@@ -57,6 +58,13 @@ const Sidebar = () => {
         path: "/manage-collaborators",
         icon: <TeamOutlined />,
         description: "Manage your collaborators",
+      },
+      {
+        key: "18",
+        label: "Create report",
+        path: "/create-report",
+        icon: <FlagOutlined />,
+        description: "Send your reports to the staffs",
       },
     ],
   };

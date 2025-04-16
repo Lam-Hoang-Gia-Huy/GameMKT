@@ -133,14 +133,14 @@ const StaffProjectDetailPage = () => {
           .then(() => {
             message.success(
               `Project ${
-                status === "ONGOING" ? "approved" : "rejected"
+                status === "VISIBLE" ? "approved" : "rejected"
               } successfully`
             );
             setProject((prev) => ({ ...prev, status }));
           })
           .catch((error) => {
             message.error(
-              `Failed to ${status === "ONGOING" ? "approve" : "reject"} project`
+              `Failed to ${status === "VISIBLE" ? "approve" : "reject"} project`
             );
             console.error(error);
           });
@@ -153,7 +153,7 @@ const StaffProjectDetailPage = () => {
 
     const status = project.status || "PENDING";
     const color = {
-      ONGOING: "green",
+      VISIBLE: "green",
       HALTED: "red",
       DELETED: "orange",
       INVISIBLE: "gray",
@@ -178,7 +178,7 @@ const StaffProjectDetailPage = () => {
       return { text: `Starts in ${days} days`, days, status: "upcoming" };
     } else if (now >= startDate && now <= endDate) {
       const days = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
-      return { text: `${days} days to go`, days, status: "ongoing" };
+      return { text: `${days} days to go`, days, status: "VISIBLE" };
     } else {
       return { text: "Funding ended", days: 0, status: "ended" };
     }
@@ -361,7 +361,7 @@ const StaffProjectDetailPage = () => {
                     type="primary"
                     icon={<CheckCircleOutlined />}
                     block
-                    onClick={() => handleApprove("ONGOING")}
+                    onClick={() => handleApprove("VISIBLE")}
                   >
                     Approve Project
                   </Button>

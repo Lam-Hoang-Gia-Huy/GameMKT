@@ -72,7 +72,14 @@ const HeaderBar = () => {
           <Menu.Item key="1">
             <Link to="/profile">Profile</Link>
           </Menu.Item>
-          <Menu.Item key="2" onClick={handleLogout}>
+          {auth.role === "CUSTOMER" ? (
+            <Menu.Item key="2">
+              <Link to="/reports">My reports</Link>
+            </Menu.Item>
+          ) : (
+            <></>
+          )}
+          <Menu.Item key="3" onClick={handleLogout}>
             Logout
           </Menu.Item>
         </>

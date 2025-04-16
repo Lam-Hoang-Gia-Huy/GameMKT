@@ -23,7 +23,7 @@ const ApprovedProjects = () => {
     try {
       const response = await fetchProjectsAdmin();
       const filteredProjects = response.data.data.filter((p) =>
-        ["ONGOING", "HALTED"].includes(p.status)
+        ["VISIBLE", "HALTED"].includes(p.status)
       );
       setProjects(filteredProjects || []);
     } catch (error) {
@@ -33,7 +33,7 @@ const ApprovedProjects = () => {
 
   const getStatusTag = (status) => {
     const statusColors = {
-      ONGOING: "blue",
+      VISIBLE: "blue",
       HALTED: "orange",
     };
     return <Tag color={statusColors[status] || "default"}>{status}</Tag>;
@@ -115,7 +115,7 @@ const ApprovedProjects = () => {
           className="w-48 border-gray-300 rounded-md"
         >
           <Option value="">All</Option>
-          <Option value="ONGOING">Ongoing</Option>
+          <Option value="VISIBLE">VISIBLE</Option>
           <Option value="HALTED">Paused</Option>
         </Select>
       </div>

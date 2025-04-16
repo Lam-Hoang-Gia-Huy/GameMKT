@@ -38,7 +38,9 @@ const AdminProjectDetailPage = () => {
     if (!isAuthChecked && auth?.role) {
       setIsAuthChecked(true); // Đánh dấu đã kiểm tra quyền
       if (auth.role !== "Admin") {
-        message.error("Bạn không có quyền hạn để vào. Vui lòng liên hệ với admin !");
+        message.error(
+          "Bạn không có quyền hạn để vào. Vui lòng liên hệ với admin !"
+        );
         navigate("/");
         return;
       }
@@ -156,7 +158,7 @@ const AdminProjectDetailPage = () => {
           >
             {/* ✅ Hiển thị trạng thái dự án */}
             <Tag
-              color={project.status === "ONGOING" ? "green" : "red"}
+              color={project.status === "VISIBLE" ? "green" : "red"}
               style={{ fontSize: "16px", marginBottom: 10 }}
             >
               {project.status}
