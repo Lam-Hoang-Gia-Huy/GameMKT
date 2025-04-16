@@ -29,10 +29,11 @@ const Loginform = () => {
 
       const token = response.data?.token;
       const user = response.data?.user || { username };
+      const name = response.data["full-name"];
       const role = response.data?.role;
       const id = response.data?.hint;
       if (token) {
-        setAuth({ token, user, role, id });
+        setAuth({ token, user, name, role, id });
         setSuccessMsg(response.data?.message || "Logged in successfully!");
         setErrorMsg("");
         setTimeout(() => {

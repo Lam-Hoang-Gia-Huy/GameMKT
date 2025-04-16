@@ -17,6 +17,7 @@ import {
   DollarOutlined,
   QuestionCircleOutlined,
   UsergroupAddOutlined,
+  CopyOutlined,
 } from "@ant-design/icons";
 import Logo from "../../assets/logo.png";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -104,6 +105,13 @@ const HeaderBar = () => {
       icon: <DollarOutlined />,
       label: "My Pledges",
       path: "/pledges",
+      roles: ["CUSTOMER"],
+    },
+    {
+      key: "postManagement",
+      icon: <CopyOutlined />,
+      label: "Post Management",
+      path: "/post-managemnent",
       roles: ["CUSTOMER"],
     },
     {
@@ -265,17 +273,9 @@ const HeaderBar = () => {
 
       {/* Right Section: Search and Avatar */}
       <Space size="middle">
-        <Input
-          placeholder="Search projects..."
-          prefix={<SearchOutlined />}
-          style={{
-            width: "200px", // Reduced width to match the screenshot
-            borderRadius: "4px",
-            border: "none",
-            boxShadow: "none",
-          }}
-          allowClear
-        />
+        <Text style={{ color: "#fff", fontSize: "16px" }}>
+          <Link to="profile">Welcome, {auth?.name || "User"}</Link>
+        </Text>
         <Dropdown overlay={userMenu} placement="bottomRight" arrow>
           <Space
             style={{

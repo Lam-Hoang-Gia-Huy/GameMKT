@@ -6,10 +6,9 @@ const { Footer } = Layout;
 const FooterBar = () => {
   return (
     <Footer
-      
       style={{ textAlign: "center", background: "#001529", color: "#fff" }}
     >
-      © {new Date().getFullYear()} Project Dashboard. All Rights Reserved.
+      © {new Date().getFullYear()} GameMKT. All Rights Reserved.
     </Footer>
   );
 };

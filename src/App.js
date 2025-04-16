@@ -27,6 +27,7 @@ import CollaboratorManagementPage from "./pages/CollaboratorManagementPage";
 import EditorProjects from "./pages/EditorProjects";
 import ReportList from "./pages/ReportListPage";
 import CreateReport from "./pages/CreateReportPage";
+import PostManagement from "./pages/PostManagement";
 function App() {
   return (
     <Routes>
@@ -75,6 +76,8 @@ function App() {
           <Route path="edit-project/:projectId" element={<UserEditProject />} />
           <Route path="/pledges" element={<PledgesPage />} />
           <Route path="/my-editor-projects" element={<EditorProjects />} />
+          <Route path="/post-managemnent" element={<PostManagement />} />
+
           <Route
             path="manage-collaborators"
             element={<CollaboratorManagementPage />}

@@ -200,7 +200,12 @@ const ProjectDetailPage = () => {
           <MessageOutlined /> Updates
         </span>
       ),
-      children: <ProjectUpdates updates={[]} onAddUpdate={handleAddUpdate} />,
+      children: (
+        <ProjectUpdates
+          projectId={project?.["project-id"]}
+          isCreator={isCreator}
+        />
+      ),
     },
     {
       key: "3",

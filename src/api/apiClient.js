@@ -1,13 +1,6 @@
 import axios from "axios";
 import qs from "qs";
 
-const apiClient = axios.create({
-  baseURL: "https://6656dd4e9f970b3b36c6e348.mockapi.io",
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
 const apiBase = axios.create({
   baseURL: "https://marvelous-gentleness-production.up.railway.app",
   headers: {
@@ -338,4 +331,39 @@ export const createReport = (detail) => {
 export const fetchReportsByUserId = () => {
   return apiAuth.get("/api/Report/GetReportByUserId");
 };
-export default apiClient;
+// Post APIs
+export const createPost = (data) => {
+  const formData = new FormData();
+  formData.append("ProjectId", data.ProjectId);
+  formData.append("Title", data.Title);
+  formData.append("Description", data.Description);
+  formData.append("Status", data.Status);
+  return apiAuth.post("/api/Post", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
+export const fetchPostsByProject = (projectId, page = 1, pageSize = 20) => {
+  return apiAuth.get(
+    `/api/Post/pagination/project?projectId=${projectId}&page=${page}&pageSize=${pageSize}`
+  );
+};
+
+export const getPostById = (postId) => {
+  return apiAuth.get(`/api/Post/GetPost?postId=${postId}`);
+};
+
+export const updatePost = (postId, data) => {
+  const formData = new FormData();
+  formData.append("ProjectId", data.ProjectId);
+  formData.append("Title", data.Title);
+  formData.append("Description", data.Description);
+  formData.append("Status", data.Status);
+  return apiAuth.put(`/api/Post/Update?postId=${postId}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
+export const deletePost = (postId) => {
+  return apiAuth.delete(`/api/Post/DeletePost?postId=${postId}`);
+};
