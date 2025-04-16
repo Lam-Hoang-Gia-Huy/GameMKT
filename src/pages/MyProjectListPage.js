@@ -5,16 +5,27 @@ import {
   deleteProject,
   fetchProjectCategories,
 } from "../api/apiClient";
-import { Button, Table, Modal, message, Space, Tag } from "antd";
+import {
+  Button,
+  Table,
+  Modal,
+  message,
+  Space,
+  Tag,
+  Typography,
+  Divider,
+} from "antd";
 import placeholder from "../assets/placeholder-1-1-1.png";
 import RewardList from "../components/MyProjectListPage/RewardList";
 import {
   EditOutlined,
   DeleteOutlined,
   ExclamationCircleOutlined,
+  ProjectOutlined,
 } from "@ant-design/icons";
 
 const { confirm } = Modal;
+const { Title, Text } = Typography;
 
 const MyProjectList = () => {
   const [projects, setProjects] = useState([]);
@@ -201,7 +212,11 @@ const MyProjectList = () => {
 
   return (
     <div>
-      <h1>My Projects</h1>
+      <Title level={2} style={{ marginBottom: 0 }}>
+        <ProjectOutlined /> My projects
+      </Title>
+      <Text type="secondary">List of my own projects</Text>
+      <Divider />
       <Table
         columns={columns}
         dataSource={projects}

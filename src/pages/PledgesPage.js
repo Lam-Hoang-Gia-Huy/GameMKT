@@ -12,6 +12,8 @@ import {
   Progress,
   Space,
   Button,
+  message,
+  Modal,
 } from "antd";
 import {
   CheckCircleOutlined,
@@ -21,18 +23,57 @@ import {
   DeleteOutlined,
   ProjectOutlined,
   EyeInvisibleOutlined,
+  ExclamationCircleOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
-import { fetchPledgesByUserId, fetchProject } from "../api/apiClient";
+import {
+  fetchPledgesByUserId,
+  fetchProject,
+  exportPledgesToExcel,
+} from "../api/apiClient";
 import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
-
+const { confirm } = Modal;
 const PledgesPage = () => {
   const [pledges, setPledges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pageSize, setPageSize] = useState(3);
   const [currentPage, setCurrentPage] = useState(1);
-
+  const showDownloadConfirm = (projectId, projectTitle) => {
+    confirm({
+      title: "Do you want to download this pledge?",
+      icon: <ExclamationCircleOutlined />,
+      okText: "Yes",
+      okType: "danger",
+      cancelText: "No",
+      onOk() {
+        handleExportToExcel(projectId, projectTitle);
+      },
+    });
+  };
+  const handleExportToExcel = async (projectId, projectTitle) => {
+    try {
+      const response = await exportPledgesToExcel(projectId);
+      const blob = new Blob([response.data], {
+        type: response.headers["content-type"],
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Pledges_${projectTitle}_${dayjs().format(
+        "YYYY-MM-DD"
+      )}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      message.success("Excel file downloaded successfully!");
+    } catch (error) {
+      console.error("Error exporting pledges to Excel:", error);
+      message.error("Failed to export pledges to Excel.");
+    }
+  };
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -302,6 +343,19 @@ const PledgesPage = () => {
                           </Card>
                         </Col>
                       </Row>
+                      <Button
+                        type="default"
+                        icon={<DownloadOutlined />}
+                        onClick={() =>
+                          showDownloadConfirm(
+                            pledge["project-id"],
+                            project.title
+                          )
+                        }
+                        style={{ marginTop: 16 }}
+                      >
+                        Export to Excel
+                      </Button>
                     </Space>
                   </Col>
                 </Row>

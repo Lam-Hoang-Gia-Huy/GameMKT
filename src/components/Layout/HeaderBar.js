@@ -274,7 +274,9 @@ const HeaderBar = () => {
       {/* Right Section: Search and Avatar */}
       <Space size="middle">
         <Text style={{ color: "#fff", fontSize: "16px" }}>
-          <Link to="profile">Welcome, {auth?.name || "User"}</Link>
+          <Link style={{ color: "white" }} to="profile">
+            Welcome, {auth?.name || "User"}
+          </Link>
         </Text>
         <Dropdown overlay={userMenu} placement="bottomRight" arrow>
           <Space

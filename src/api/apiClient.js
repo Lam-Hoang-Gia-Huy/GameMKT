@@ -367,3 +367,11 @@ export const updatePost = (postId, data) => {
 export const deletePost = (postId) => {
   return apiAuth.delete(`/api/Post/DeletePost?postId=${postId}`);
 };
+export const exportPledgesToExcel = (projectId) => {
+  return apiAuth.get(`/api/Pledge/ExportPledgesToExcel/${projectId}`, {
+    responseType: "blob",
+    headers: {
+      Accept: "*/*",
+    },
+  });
+};
