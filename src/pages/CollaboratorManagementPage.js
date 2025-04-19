@@ -18,6 +18,7 @@ import {
   getProjectCollaborators,
   removeCollaborator,
   fetchUserProjects,
+  editCollaboratorRole,
 } from "../api/apiClient";
 
 const { Title, Text } = Typography;
@@ -121,6 +122,26 @@ const CollaboratorManagementPage = () => {
     }
   };
 
+  const handleEditCollaboratorRole = async (userId, projectId, newRole) => {
+    try {
+      setLoading(true);
+      const response = await editCollaboratorRole(userId, projectId, newRole);
+
+      if (response.data.success) {
+        message.success("Collaborator role updated successfully");
+        loadCollaborators(projectId);
+      } else {
+        message.error(
+          response.data.message || "Failed to update collaborator role"
+        );
+      }
+      setLoading(false);
+    } catch (error) {
+      message.error("Failed to update collaborator role");
+      setLoading(false);
+    }
+  };
+
   const columns = [
     {
       title: "User",
@@ -143,6 +164,22 @@ const CollaboratorManagementPage = () => {
       title: "Role",
       dataIndex: "role",
       key: "role",
+      render: (role, record) => (
+        <Select
+          value={role}
+          style={{ width: 120 }}
+          onChange={(newRole) =>
+            handleEditCollaboratorRole(
+              record["user-id"],
+              record["project-id"],
+              newRole
+            )
+          }
+        >
+          <Option value="EDITOR">Editor</Option>
+          <Option value="VIEWER">Viewer</Option>
+        </Select>
+      ),
     },
     {
       title: "Actions",

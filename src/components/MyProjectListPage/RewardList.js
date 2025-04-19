@@ -94,7 +94,7 @@ const RewardList = ({ projectId }) => {
       setEditingReward(null);
       loadRewards();
     } catch (error) {
-      message.error("Operation failed");
+      message.error("Action failed");
     }
   };
 

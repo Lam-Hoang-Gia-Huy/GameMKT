@@ -211,7 +211,11 @@ const CreateProjectForm = () => {
               { required: true, message: "Please enter a minimum amount" },
             ]}
           >
-            <InputNumber min={1} style={{ width: "100%" }} />
+            <InputNumber
+              placeholder="Enter amount number"
+              min={1}
+              style={{ width: "100%" }}
+            />
           </Form.Item>
 
           <Form.Item

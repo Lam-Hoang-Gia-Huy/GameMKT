@@ -238,7 +238,18 @@ export const deleteFaq = (projectId, question) =>
       question
     )}`
   );
+export const editCollaboratorRole = (userId, projectId, role) => {
+  const formData = new FormData();
+  formData.append("UserId", userId);
+  formData.append("ProjectId", projectId);
+  formData.append("Role", role);
 
+  return apiAuth.put("/api/Collaborator", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
 export const createCollaborator = (email, projectId, role) => {
   const formData = new FormData();
   formData.append("Email", email);
