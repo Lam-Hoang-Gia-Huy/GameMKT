@@ -12,6 +12,7 @@ import {
 import {
   UserOutlined,
   SearchOutlined,
+  StockOutlined,
   ProjectOutlined,
   FileOutlined,
   DollarOutlined,
@@ -96,8 +97,15 @@ const HeaderBar = () => {
     {
       key: "projects",
       icon: <ProjectOutlined />,
-      label: "My Projects",
+      label: "My Projects Editor",
       path: "/my-projects",
+      roles: ["CUSTOMER"],
+    },
+    {
+      key: "projects tracker",
+      icon: <StockOutlined />,
+      label: "Progress Tracker",
+      path: "/project-backers",
       roles: ["CUSTOMER"],
     },
     {

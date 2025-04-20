@@ -258,7 +258,7 @@ const InvisibleProjects = () => {
             </Select>
           </div>
           <div>
-            <label className="block mb-2">Reason (optional)</label>
+            <label className="block mb-2">Reason</label>
             <Input.TextArea
               value={reason}
               onChange={(e) => setReason(e.target.value)}

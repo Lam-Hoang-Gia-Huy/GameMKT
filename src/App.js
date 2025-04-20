@@ -28,6 +28,7 @@ import EditorProjects from "./pages/EditorProjects";
 import ReportList from "./pages/ReportListPage";
 import CreateReport from "./pages/CreateReportPage";
 import PostManagement from "./pages/PostManagement";
+import ProjectBackersPage from "./pages/ProjectBackersPage";
 function App() {
   return (
     <Routes>
@@ -77,7 +78,7 @@ function App() {
           <Route path="/pledges" element={<PledgesPage />} />
           <Route path="/my-editor-projects" element={<EditorProjects />} />
           <Route path="/post-managemnent" element={<PostManagement />} />
-
+          <Route path="/project-backers" element={<ProjectBackersPage />} />
           <Route
             path="manage-collaborators"
             element={<CollaboratorManagementPage />}
