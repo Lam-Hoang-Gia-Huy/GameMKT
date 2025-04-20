@@ -97,7 +97,7 @@ const HeaderBar = () => {
     {
       key: "projects",
       icon: <ProjectOutlined />,
-      label: "My Projects Editor",
+      label: "Project Editor",
       path: "/my-projects",
       roles: ["CUSTOMER"],
     },
