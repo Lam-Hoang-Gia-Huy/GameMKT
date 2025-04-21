@@ -9,6 +9,7 @@ import {
   Card,
   message,
   Spin,
+  Popconfirm,
 } from "antd";
 import {
   EditOutlined,
@@ -197,14 +198,20 @@ const ProjectComments = ({ projectId }) => {
                 >
                   Edit
                 </Button>,
-                <Button
-                  type="text"
-                  icon={<DeleteOutlined />}
-                  onClick={() => handleDeleteComment(comment["comment-id"])}
-                  style={{ color: "#ff4d4f" }}
+                <Popconfirm
+                  title="Are you sure you want to delete this comment?"
+                  onConfirm={() => handleDeleteComment(comment["comment-id"])}
+                  okText="Yes"
+                  cancelText="No"
                 >
-                  Delete
-                </Button>,
+                  <Button
+                    type="text"
+                    icon={<DeleteOutlined />}
+                    style={{ color: "#ff4d4f" }}
+                  >
+                    Delete
+                  </Button>
+                </Popconfirm>,
                 <Button
                   type="text"
                   icon={<CommentOutlined />}

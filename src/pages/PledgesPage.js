@@ -181,7 +181,7 @@ const PledgesPage = () => {
             ? Math.min(
                 100,
                 (project["total-amount"] / project["minimum-amount"]) * 100
-              )
+              ).toFixed(2)
             : 0;
 
           return (
