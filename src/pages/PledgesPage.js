@@ -286,7 +286,7 @@ const PledgesPage = () => {
                           >
                             <List
                               size="small"
-                              dataSource={pledgeData["pledge-details"]} // Fixed key name
+                              dataSource={pledgeData["pledge-details"]}
                               renderItem={(detail) => (
                                 <List.Item>
                                   <Row gutter={8} style={{ width: "100%" }}>
@@ -301,17 +301,23 @@ const PledgesPage = () => {
                                     </Col>
                                     <Col>
                                       <Text strong>Invoice ID:</Text>{" "}
-                                      <Text>{detail["invoice-id"]}</Text>
+                                      <Text>
+                                        {detail["invoice-id"] || "N/A"}
+                                      </Text>
                                     </Col>
                                     <Col>
                                       <Text strong>Invoice URL:</Text>{" "}
-                                      <a
-                                        href={detail["invoice-url"]}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                      >
-                                        View Invoice
-                                      </a>
+                                      {detail["invoice-url"] ? (
+                                        <a
+                                          href={detail["invoice-url"]}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                        >
+                                          View Invoice
+                                        </a>
+                                      ) : (
+                                        <Text>Not Available</Text>
+                                      )}
                                     </Col>
                                     <Col>
                                       <Text strong>Created:</Text>{" "}

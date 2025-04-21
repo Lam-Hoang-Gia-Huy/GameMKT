@@ -386,3 +386,39 @@ export const exportPledgesToExcel = (projectId) => {
     },
   });
 };
+
+// Send verification code to email
+export const sendVerificationCode = (email) => {
+  const formData = new FormData();
+  formData.append("email", email);
+
+  return apiBase.post("/api/ForgotPassword/Send-Code", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+      Accept: "*/*",
+    },
+  });
+};
+// Verify the code
+export const verifyCode = (email, code) => {
+  return apiBase.get("/api/ForgotPassword/Verify-Code", {
+    params: { email, code },
+    headers: {
+      Accept: "*/*",
+    },
+  });
+};
+// Reset password
+export const resetPassword = (email, newPassword) => {
+  return apiBase.post(
+    `/api/ForgotPassword/Reset-Password?email=${encodeURIComponent(
+      email
+    )}&newPassword=${encodeURIComponent(newPassword)}`,
+    null,
+    {
+      headers: {
+        Accept: "*/*",
+      },
+    }
+  );
+};

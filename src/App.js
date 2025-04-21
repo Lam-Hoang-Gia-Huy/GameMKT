@@ -29,11 +29,11 @@ import ReportList from "./pages/ReportListPage";
 import CreateReport from "./pages/CreateReportPage";
 import PostManagement from "./pages/PostManagement";
 import ProjectBackersPage from "./pages/ProjectBackersPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 function App() {
   return (
     <Routes>
       <Route path="/" element={<LayoutCom />}>
-        {/* 🔥 Đảm bảo Staff không thể truy cập một số trang nhất định */}
         <Route path="/payment/result" element={<PaymentResult />} />
         <Route
           element={
@@ -102,6 +102,7 @@ function App() {
       {/* 🔐 Layout riêng cho Login */}
       <Route element={<LoginLayout />}>
         <Route path="login" element={<Login />} />
+        <Route path="forgot-password" element={<ResetPasswordPage />} />
       </Route>
 
       {/* 🔐 Layout riêng cho Register */}
