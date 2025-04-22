@@ -25,7 +25,7 @@ function Header() {
     };
   }, [isOpen]);
   return (
-    <div className="flex bg-steam flex-grow justify-center items-center space-x-[100px] brightness-110 h-[160px] w-screen">
+    <div className="flex bg-steam flex-grow justify-center items-center space-x-[100px] brightness-110 h-[80px] w-screen">
       <div className="flex space-x-2 justify-center items-center lg:-ml-[135px]">
         <img className="rounded-full w-[200px] h-auto" src={logo} alt="logo" />
       </div>
