@@ -30,6 +30,8 @@ import CreateReport from "./pages/CreateReportPage";
 import PostManagement from "./pages/PostManagement";
 import ProjectBackersPage from "./pages/ProjectBackersPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import PlatformManagement from "./pages/PlatformManagement";
+import CategoryManagement from "./pages/CategoryManagement";
 function App() {
   return (
     <Routes>
@@ -65,6 +67,8 @@ function App() {
             path="staff/project/:id"
             element={<StaffProjectDetailPage />}
           />
+          <Route path="platform" element={<PlatformManagement />} />
+          <Route path="category" element={<CategoryManagement />} />
         </Route>
 
         {/* 🔐 Customer routes */}

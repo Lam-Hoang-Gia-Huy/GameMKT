@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchProjectsAdmin } from "../api/apiClient";
-import { Table, Input, Select, Typography, Tag } from "antd";
+import { fetchProjectsAdmin, refundAllPledges } from "../api/apiClient"; // Add refundAllPledges import
+import {
+  Table,
+  Input,
+  Select,
+  Typography,
+  Tag,
+  Button,
+  Popconfirm,
+  message,
+} from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import placeholder from "../assets/placeholder-1-1-1.png";
 
@@ -23,18 +32,34 @@ const ApprovedProjects = () => {
     try {
       const response = await fetchProjectsAdmin();
       const filteredProjects = response.data.data.filter((p) =>
-        ["VISIBLE", "HALTED"].includes(p.status)
+        ["VISIBLE", "DELETED"].includes(p.status)
       );
       setProjects(filteredProjects || []);
     } catch (error) {
       console.error("Error fetching projects", error);
+      message.error("Error fetching projects");
+    }
+  };
+
+  const handleRefund = async (projectId) => {
+    try {
+      const response = await refundAllPledges(projectId);
+      if (response.data.success) {
+        message.success("All pledges refunded successfully");
+        fetchProjects(); // Refresh the project list
+      } else {
+        message.error("Failed to refund pledges");
+      }
+    } catch (error) {
+      console.error("Error refunding pledges", error);
+      message.error("Error refunding pledges");
     }
   };
 
   const getStatusTag = (status) => {
     const statusColors = {
       VISIBLE: "blue",
-      HALTED: "orange",
+      DELTED: "orange",
     };
     return <Tag color={statusColors[status] || "default"}>{status}</Tag>;
   };
@@ -81,17 +106,34 @@ const ApprovedProjects = () => {
       render: (text) => new Date(text).toLocaleDateString(),
     },
     {
+      title: "Current amount",
+      dataIndex: "total-amount",
+      render: (amount) => `${amount.toLocaleString()}$`,
+    },
+    {
       title: "Min Amount",
       dataIndex: "minimum-amount",
-      render: (amount) => `${amount.toLocaleString()} VND`,
+      render: (amount) => `${amount.toLocaleString()}$`,
     },
     {
       title: "Action",
       render: (record) => (
-        <EyeOutlined
-          className="text-blue-500 cursor-pointer text-lg"
-          onClick={() => navigate(`/staff/project/${record["project-id"]}`)}
-        />
+        <div className="flex items-center space-x-4">
+          <EyeOutlined
+            className="text-blue-500 cursor-pointer text-lg"
+            onClick={() => navigate(`/staff/project/${record["project-id"]}`)}
+          />
+          <Popconfirm
+            title="Are you sure to refund all pledges for this project?"
+            onConfirm={() => handleRefund(record["project-id"])}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button type="primary" danger size="small">
+              Refund
+            </Button>
+          </Popconfirm>
+        </div>
       ),
     },
   ];
@@ -116,7 +158,7 @@ const ApprovedProjects = () => {
         >
           <Option value="">All</Option>
           <Option value="VISIBLE">VISIBLE</Option>
-          <Option value="HALTED">Paused</Option>
+          <Option value="DELETED">HALTED</Option>
         </Select>
       </div>
       <Table

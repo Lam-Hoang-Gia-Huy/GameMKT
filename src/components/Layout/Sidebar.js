@@ -10,6 +10,8 @@ import {
   ProjectOutlined,
   TeamOutlined,
   FlagOutlined,
+  TagsOutlined,
+  WindowsOutlined,
 } from "@ant-design/icons";
 
 const Sidebar = () => {
@@ -38,10 +40,24 @@ const Sidebar = () => {
       },
       {
         key: "12",
-        label: "Approved Projects",
+        label: "Project monitor",
         path: "/approved-projects",
         icon: <CheckCircleOutlined />,
         description: "See all approved projects",
+      },
+      {
+        key: "13",
+        label: "Category",
+        path: "/category",
+        icon: <TagsOutlined />,
+        description: "Manage website's categories",
+      },
+      {
+        key: "14",
+        label: "Platform",
+        path: "/platform",
+        icon: <WindowsOutlined />,
+        description: "SManage website's platform",
       },
     ],
     CUSTOMER: [

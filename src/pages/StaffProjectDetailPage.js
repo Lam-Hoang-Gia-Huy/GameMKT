@@ -29,10 +29,14 @@ import {
   DollarOutlined,
   TeamOutlined,
   CalendarOutlined,
+  BulbOutlined,
+  MessageOutlined,
+  QuestionCircleOutlined,
 } from "@ant-design/icons";
 import TipTapViewer from "../components/TipTapViewer";
 import ProjectComments from "../components/ProjectDetailPage/ProjectComments";
 import ProjectUpdates from "../components/ProjectDetailPage/ProjectUpdates";
+import ProjectFaqs from "../components/ProjectDetailPage/ProjectFaqs";
 import placeholder from "../assets/placeholder-1-1-1.png";
 import {
   fetchProject,
@@ -55,7 +59,6 @@ const StaffProjectDetailPage = () => {
   const [creator, setCreator] = useState(null);
   const [activeTab, setActiveTab] = useState("1");
   const [categories, setCategories] = useState([]);
-  const [rejectionReason, setRejectionReason] = useState("");
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -189,7 +192,11 @@ const StaffProjectDetailPage = () => {
   const items = [
     {
       key: "1",
-      label: "About",
+      label: (
+        <span>
+          <BulbOutlined /> About
+        </span>
+      ),
       children: (
         <>
           {project?.story ? (
@@ -258,13 +265,30 @@ const StaffProjectDetailPage = () => {
     },
     {
       key: "2",
-      label: "Updates",
-      children: <ProjectUpdates updates={project?.updates || []} />,
+      label: (
+        <span>
+          <MessageOutlined /> Updates
+        </span>
+      ),
+      children: <ProjectUpdates projectId={project?.["project-id"] || id} />,
     },
     {
       key: "3",
-      label: "Comments",
-      children: <ProjectComments comments={project?.comments || []} />,
+      label: (
+        <span>
+          <QuestionCircleOutlined /> FAQs
+        </span>
+      ),
+      children: <ProjectFaqs projectId={project?.["project-id"] || id} />,
+    },
+    {
+      key: "4",
+      label: (
+        <span>
+          <MessageOutlined /> Comments
+        </span>
+      ),
+      children: <ProjectComments projectId={project?.["project-id"] || id} />,
     },
   ];
 

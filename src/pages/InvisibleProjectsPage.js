@@ -38,7 +38,7 @@ const StatusTag = React.memo(({ status }) => {
   const statusColors = {
     INVISIBLE: "red",
     VISIBLE: "green",
-    HALTED: "orange",
+    DELETED: "orange",
   };
   return <Tag color={statusColors[status] || "default"}>{status}</Tag>;
 });
@@ -254,7 +254,7 @@ const InvisibleProjects = () => {
             <label className="block mb-2">Status</label>
             <Select value={status} onChange={setStatus} className="w-full">
               <Option value="VISIBLE">VISIBLE</Option>
-              <Option value="HALTED">HALTED</Option>
+              <Option value="DELETED">DELETED</Option>
             </Select>
           </div>
           <div>

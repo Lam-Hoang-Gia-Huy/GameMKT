@@ -422,3 +422,69 @@ export const resetPassword = (email, newPassword) => {
     }
   );
 };
+export const createPlatform = (data) => {
+  const formData = new FormData();
+  formData.append("Name", data.Name);
+  formData.append("Description", data.Description);
+
+  return apiAuth.post("/api/Platform/create", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
+export const updatePlatform = (platformId, data) => {
+  const formData = new FormData();
+  formData.append("Name", data.Name);
+  formData.append("Description", data.Description);
+
+  return apiAuth.put(`/api/Platform?platformId=${platformId}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
+export const deletePlatform = (platformId) =>
+  apiAuth.delete(`/api/Platform?platformId=${platformId}`);
+// Category APIs
+export const createCategory = (data) => {
+  const formData = new FormData();
+  if (data.ParentCategoryId) {
+    formData.append("ParentCategoryId", data.ParentCategoryId);
+  }
+  formData.append("Name", data.Name);
+  formData.append("Description", data.Description);
+
+  return apiAuth.post("/api/Category/AddCategory", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
+export const updateCategory = (categoryId, data) => {
+  return apiAuth.put(
+    `/api/Category/UpdateCategory?categoryId=${categoryId}`,
+    data,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+};
+
+export const deleteCategory = (categoryId) =>
+  apiAuth.delete(`/api/Category/DeleteCategory?categoryId=${categoryId}`);
+export const refundAllPledges = (projectId) =>
+  apiAuth.post(
+    `/api/PaypalPayment/RefundAllPledgesForProject?projectId=${projectId}`,
+    null,
+    {
+      headers: {
+        Accept: "*/*",
+      },
+    }
+  );
