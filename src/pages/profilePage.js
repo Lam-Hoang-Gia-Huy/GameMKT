@@ -9,6 +9,7 @@ import {
   Modal,
   Form,
   Input,
+  Tag,
   Upload,
   message,
   Tabs,
@@ -79,7 +80,7 @@ const ProfilePage = () => {
     });
     setIsVerifyModalOpen(true);
   };
-
+  const isVerified = auth?.phone && auth?.paymentAccount;
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
@@ -257,6 +258,11 @@ const ProfilePage = () => {
             <Descriptions.Item label="Phone">{auth?.phone}</Descriptions.Item>
             <Descriptions.Item label="Payment Account">
               {auth?.paymentAccount || "Chưa xác nhận"}
+            </Descriptions.Item>
+            <Descriptions.Item label="Verification Status">
+              <Tag color={isVerified ? "green" : "red"}>
+                {isVerified ? "Verified" : "Not Verified"}
+              </Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Created Date">
               {auth?.createdDate
