@@ -175,13 +175,7 @@ const Register = () => {
               justifyContent: "center",
               marginBottom: 16,
             }}
-          >
-            <ReCAPTCHA
-              sitekey={sitekey}
-              onChange={handleCaptchaChange}
-              ref={recaptchaRef}
-            />
-          </div>
+          ></div>
         </Form.Item>
 
         <Form.Item>
@@ -189,7 +183,7 @@ const Register = () => {
             type="primary"
             htmlType="submit"
             loading={isSubmitting}
-            disabled={!captchaValue || isSubmitting}
+            disabled={isSubmitting}
             block
             size="large"
           >
