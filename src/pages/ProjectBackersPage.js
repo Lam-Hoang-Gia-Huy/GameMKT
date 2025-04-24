@@ -27,6 +27,7 @@ import {
 import { fetchUserProjects, exportPledgesToExcel } from "../api/apiClient";
 import axios from "axios";
 import dayjs from "dayjs";
+import placeholder from "../assets/placeholder-1-1-1.png";
 
 const { Title, Text } = Typography;
 const { confirm } = Modal;
@@ -45,18 +46,19 @@ const ProjectBackersPage = () => {
   const [backerCurrentPage, setBackerCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch user projects on mount
   useEffect(() => {
     const loadProjects = async () => {
       try {
         const res = await fetchUserProjects();
         const allProjects = res.data.data || [];
-        // Filter projects with total-amount > 0
-        const validProjects = allProjects.filter(
-          (project) => project["total-amount"] > 0
-        );
-        setProjects(validProjects);
-        setFilteredProjects(validProjects);
+        // Sắp xếp projects: total-amount > 0 lên đầu, total-amount = 0 xuống cuối
+        const sortedProjects = allProjects.sort((a, b) => {
+          if (a["total-amount"] > 0 && b["total-amount"] === 0) return -1;
+          if (a["total-amount"] === 0 && b["total-amount"] > 0) return 1;
+          return 0; // Giữ nguyên thứ tự nếu cả hai đều > 0 hoặc đều = 0
+        });
+        setProjects(sortedProjects);
+        setFilteredProjects(sortedProjects);
       } catch (error) {
         console.error("Error loading projects:", error);
         message.error("Failed to load projects.");
@@ -94,7 +96,7 @@ const ProjectBackersPage = () => {
       setSelectedProject(projectId);
     } catch (error) {
       console.error("Error fetching backers:", error);
-      message.error("Failed to fetch backers.");
+      message.error("No pledges found for the specified user and project.");
       setBackers([]);
     } finally {
       setLoadingBackers(false);
@@ -323,7 +325,7 @@ const ProjectBackersPage = () => {
                         borderRadius: 4,
                       }}
                       preview={false}
-                      fallback="https://via.placeholder.com/300x180?text=Project+Image"
+                      fallback={placeholder}
                     />
                   </Col>
                   <Col xs={24} sm={24} md={16} lg={18}>
@@ -345,6 +347,24 @@ const ProjectBackersPage = () => {
                       </Text>
                       <Text type="secondary">
                         Status: {getStatusTag(project.status)}
+                      </Text>
+                      <Text type="secondary">
+                        Transaction Status:{" "}
+                        <Tag
+                          color={
+                            project["transaction-status"] === "PENDING"
+                              ? "gold"
+                              : project["transaction-status"] === "RECEIVING"
+                              ? "green"
+                              : project["transaction-status"] === "TRANSFERRED"
+                              ? "blue"
+                              : project["transaction-status"] === "REFUNDED"
+                              ? "red"
+                              : "default"
+                          }
+                        >
+                          {project["transaction-status"] || "N/A"}
+                        </Tag>
                       </Text>
                       <Button
                         type="primary"

@@ -259,7 +259,14 @@ const ProfilePage = () => {
               {auth?.paymentAccount || "Chưa xác nhận"}
             </Descriptions.Item>
             <Descriptions.Item label="Created Date">
-              {auth?.createdDate}
+              {auth?.createdDate
+                ? new Date(auth.createdDate).toLocaleString("vi-VN", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    timeZone: "Asia/Ho_Chi_Minh",
+                  })
+                : "N/A"}
             </Descriptions.Item>
             <Descriptions.Item label="Full name">
               {auth?.fullname}

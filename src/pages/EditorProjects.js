@@ -83,7 +83,10 @@ const EditorProjects = () => {
                   }
                   actions={[
                     <Button type="primary">
-                      <Link to={`/edit-project/${item["project-id"]}`}>
+                      <Link
+                        style={{ color: "white" }}
+                        to={`/edit-project/${item["project-id"]}`}
+                      >
                         Edit Project
                       </Link>
                     </Button>,

@@ -300,13 +300,13 @@ const PledgesPage = () => {
                                       </Text>
                                     </Col>
                                     <Col>
-                                      <Text strong>Invoice ID:</Text>{" "}
+                                      <Text strong>Paypal ID:</Text>{" "}
                                       <Text>
                                         {detail["invoice-id"] || "N/A"}
                                       </Text>
                                     </Col>
                                     <Col>
-                                      <Text strong>Invoice URL:</Text>{" "}
+                                      <Text strong>Paypal URL:</Text>{" "}
                                       {detail["invoice-url"] ? (
                                         <a
                                           href={detail["invoice-url"]}
