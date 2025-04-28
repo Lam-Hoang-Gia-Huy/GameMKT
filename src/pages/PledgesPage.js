@@ -313,7 +313,7 @@ const PledgesPage = () => {
                                           target="_blank"
                                           rel="noopener noreferrer"
                                         >
-                                          View Invoice
+                                          View link
                                         </a>
                                       ) : (
                                         <Text>Not Available</Text>

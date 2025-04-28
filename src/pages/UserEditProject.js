@@ -46,6 +46,7 @@ const UserEditProject = () => {
   const [updatingBasic, setUpdatingBasic] = useState(false);
   const [updatingThumbnail, setUpdatingThumbnail] = useState(false);
   const [updatingStory, setUpdatingStory] = useState(false);
+  const [projectStatus, setProjectStatus] = useState("");
 
   useEffect(() => {
     const loadProject = async () => {
@@ -65,6 +66,7 @@ const UserEditProject = () => {
         setStory(project.story || "");
         setStoryLoaded(true);
         setCurrentThumbnail(project.thumbnail);
+        setProjectStatus(project.status || "");
       } catch (error) {
         message.error("Failed to fetch project details");
         console.error(error);
@@ -122,8 +124,15 @@ const UserEditProject = () => {
         Name: values.title,
         StartDatetime: values.startDatetime.toISOString(),
         EndDatetime: values.endDatetime.toISOString(),
-        MinimumAmount: values.minimumAmount,
       };
+
+      // Only include MinimumAmount in payload if status is not VISIBLE
+      if (projectStatus !== "VISIBLE") {
+        payload.MinimumAmount = values.minimumAmount;
+      } else {
+        // Retain the original minimumAmount from form initial values
+        payload.MinimumAmount = form.getFieldValue("minimumAmount");
+      }
 
       await updateProject(projectId, payload);
       message.success("Project information updated successfully");
@@ -181,7 +190,11 @@ const UserEditProject = () => {
                     },
                   ]}
                 >
-                  <Input type="number" prefix="$" />
+                  <Input
+                    type="number"
+                    prefix="$"
+                    disabled={projectStatus === "VISIBLE"}
+                  />
                 </Form.Item>
                 <Form.Item
                   label="Start Date"

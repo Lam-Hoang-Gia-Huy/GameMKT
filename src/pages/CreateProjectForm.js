@@ -12,6 +12,7 @@ import {
   Select,
   Tag,
   Tabs,
+  Image,
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import {
@@ -34,6 +35,7 @@ const CreateProjectForm = () => {
   const [loading, setLoading] = useState(false);
   const [storyContent, setStoryContent] = useState("");
   const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [allCategories, setAllCategories] = useState([]);
   const [allPlatforms, setAllPlatforms] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -118,7 +120,6 @@ const CreateProjectForm = () => {
     } else if (currentStep === 3) {
       try {
         setLoading(true);
-        // Thêm categories và platforms
         const promises = [];
 
         if (selectedCategories.length > 0) {
@@ -148,6 +149,7 @@ const CreateProjectForm = () => {
         setProjectId(null);
         setStoryContent("");
         setThumbnailFile(null);
+        setThumbnailPreview(null);
         setSelectedCategories([]);
         setSelectedPlatforms([]);
       } catch (error) {
@@ -251,13 +253,29 @@ const CreateProjectForm = () => {
           <Upload
             beforeUpload={(file) => {
               setThumbnailFile(file);
+              setThumbnailPreview(URL.createObjectURL(file));
               return false;
             }}
             maxCount={1}
             accept="image/*"
+            showUploadList={false}
           >
             <Button icon={<UploadOutlined />}>Select Thumbnail Image</Button>
           </Upload>
+          {thumbnailPreview && (
+            <div style={{ marginTop: 16, textAlign: "center" }}>
+              <Image
+                src={thumbnailPreview}
+                alt="Thumbnail Preview"
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: 300,
+                  borderRadius: 8,
+                  border: "1px solid #f0f0f0",
+                }}
+              />
+            </div>
+          )}
           <p style={{ marginTop: 16 }}>
             <Button type="link" onClick={handleNext}>
               Skip this step
@@ -372,4 +390,5 @@ const CreateProjectForm = () => {
     </Card>
   );
 };
+
 export default CreateProjectForm;

@@ -34,7 +34,7 @@ const ProjectSidebar = ({ project, rewards = [] }) => {
   const [form] = Form.useForm();
 
   useEffect(() => {
-    if (selectedReward) {
+    if (selectedReward && pledgeAmount === 0) {
       const reward = formattedRewards.find((r) => r.id === selectedReward);
       if (reward) {
         setPledgeAmount(reward.amount);
@@ -97,29 +97,131 @@ const ProjectSidebar = ({ project, rewards = [] }) => {
       : "exception";
 
   const handlePledge = async (values) => {
-    try {
-      const hide = message.loading("Processing payment...", 0);
-      const response = await createPaypalPayment(
-        project["project-id"],
-        values.amount
-      );
-      hide();
+    const eligibleReward = getEligibleRewards(values.amount)[0];
+    const additionalSupport = values.amount - (eligibleReward?.amount || 0);
 
-      console.log("Full PayPal response:", response); // Debug
+    Modal.confirm({
+      title: <Title level={4}>Confirm Your Pledge</Title>,
+      icon: <GiftOutlined style={{ color: "#faad14" }} />,
+      width: 600,
+      content: (
+        <div style={{ marginTop: 20 }}>
+          <Card
+            bordered={false}
+            style={{
+              backgroundColor: "#fafafa",
+              marginBottom: 20,
+              borderRadius: 8,
+            }}
+          >
+            <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <Text strong>Total Pledge Amount:</Text>
+                <Text strong style={{ fontSize: 18, color: "#1890ff" }}>
+                  ${values.amount.toLocaleString()}
+                </Text>
+              </div>
 
-      if (response.data?.data) {
-        window.location.href = response.data.data;
-      } else {
-        message.error("Invalid PayPal URL received");
-      }
-    } catch (error) {
-      console.error("Payment error:", error);
-      message.error(
-        error.response?.data?.message || "Payment failed. Please try again."
-      );
-    } finally {
-      setPledgeModalVisible(false);
-    }
+              {eligibleReward && (
+                <div>
+                  <Divider orientation="left" orientationMargin={0}>
+                    <Text type="secondary">Your Reward</Text>
+                  </Divider>
+                  <Card size="small" style={{ backgroundColor: "#fff" }}>
+                    <Space direction="vertical">
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Text strong>
+                          ${eligibleReward.amount.toLocaleString()} Tier
+                        </Text>
+                        <Tag color="gold">Selected</Tag>
+                      </div>
+                      <Text>{eligibleReward.description}</Text>
+                    </Space>
+                  </Card>
+                </div>
+              )}
+
+              {additionalSupport > 0 && (
+                <div>
+                  <Divider orientation="left" orientationMargin={0}>
+                    <Text type="secondary">Additional Support</Text>
+                  </Divider>
+                  <Alert
+                    message={
+                      <Text>
+                        Thank you for your extra support of{" "}
+                        <Text strong>
+                          ${additionalSupport.toLocaleString()}
+                        </Text>
+                        !
+                      </Text>
+                    }
+                    type="info"
+                    showIcon
+                  />
+                </div>
+              )}
+
+              {!eligibleReward && (
+                <Alert
+                  message="No reward selected - thank you for supporting this project!"
+                  type="info"
+                  showIcon
+                />
+              )}
+            </Space>
+          </Card>
+
+          <Text type="secondary">
+            By confirming, you will move to payment page.
+          </Text>
+        </div>
+      ),
+      okText: "Confirm & Pay",
+      cancelText: "Go Back",
+      okButtonProps: {
+        size: "large",
+        style: {
+          backgroundColor: "#52c41a",
+          borderColor: "#52c41a",
+          width: 180,
+          height: 40,
+        },
+      },
+      cancelButtonProps: {
+        size: "large",
+        style: { width: 120, height: 40 },
+      },
+      onOk: async () => {
+        try {
+          const hide = message.loading("Processing payment...", 0);
+          const response = await createPaypalPayment(
+            project["project-id"],
+            values.amount
+          );
+          hide();
+
+          if (response.data?.data) {
+            window.location.href = response.data.data;
+          } else {
+            message.error("Invalid PayPal URL received");
+          }
+        } catch (error) {
+          console.error("Payment error:", error);
+          message.error(
+            error.response?.data?.message || "Payment failed. Please try again."
+          );
+        } finally {
+          setPledgeModalVisible(false);
+        }
+      },
+      onCancel: () => {},
+    });
   };
 
   const displayAPIDate = (dateString) => {
@@ -129,6 +231,8 @@ const ProjectSidebar = ({ project, rewards = [] }) => {
 
   const getEligibleRewards = (amount) => {
     if (!amount) return [];
+    const exactMatch = formattedRewards.filter((r) => r.amount === amount);
+    if (exactMatch.length > 0) return exactMatch;
     return formattedRewards
       .filter((reward) => reward.amount <= amount)
       .sort((a, b) => b.amount - a.amount);
@@ -137,6 +241,18 @@ const ProjectSidebar = ({ project, rewards = [] }) => {
   const handleAmountChange = (e) => {
     const value = parseInt(e.target.value) || 0;
     setPledgeAmount(value);
+
+    const eligibleReward = formattedRewards
+      .filter((r) => r.amount <= value)
+      .sort((a, b) => b.amount - a.amount)[0];
+
+    if (eligibleReward) {
+      setSelectedReward(eligibleReward.id);
+      form.setFieldsValue({ rewardId: eligibleReward.id });
+    } else {
+      setSelectedReward(null);
+      form.setFieldsValue({ rewardId: null });
+    }
   };
 
   return (
@@ -313,6 +429,7 @@ const ProjectSidebar = ({ project, rewards = [] }) => {
                     >
                       {reward.description || "No reward details provided"}
                     </Paragraph>
+                    pousser{" "}
                     <Divider
                       style={{
                         margin: "12px 0",
@@ -385,42 +502,57 @@ const ProjectSidebar = ({ project, rewards = [] }) => {
             label={<Text strong>Select your reward</Text>}
           >
             <Radio.Group
-              onChange={(e) => setSelectedReward(e.target.value)}
+              onChange={(e) => {
+                const rewardId = e.target.value;
+                setSelectedReward(rewardId);
+                if (rewardId) {
+                  const rewardAmount = formattedRewards.find(
+                    (r) => r.id === rewardId
+                  )?.amount;
+                  setPledgeAmount(rewardAmount);
+                  form.setFieldsValue({ amount: rewardAmount });
+                } else {
+                  setPledgeAmount(0);
+                  form.setFieldsValue({ amount: 0 });
+                }
+              }}
               value={selectedReward}
               style={{ width: "100%" }}
             >
               <Space direction="vertical" style={{ width: "100%" }}>
-                <Radio.Button
-                  value={null}
-                  style={{
-                    width: "100%",
-                    height: "auto",
-                    padding: "16px",
-                    display: "block",
-                    whiteSpace: "normal",
-                    borderRadius: 4,
-                    marginBottom: 8,
-                    borderLeft: "4px solid #d9d9d9",
-                    backgroundColor: !selectedReward ? "#f0f9ff" : "inherit",
-                  }}
-                >
-                  <div>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        marginBottom: 4,
-                      }}
-                    >
-                      <Text strong style={{ fontSize: 16 }}>
-                        No reward, just support the project
+                {formattedRewards.length === 0 && (
+                  <Radio.Button
+                    value={null}
+                    style={{
+                      width: "100%",
+                      height: "auto",
+                      padding: "16px",
+                      display: "block",
+                      whiteSpace: "normal",
+                      borderRadius: 4,
+                      marginBottom: 8,
+                      borderLeft: "4px solid #d9d9d9",
+                      backgroundColor: !selectedReward ? "#f0f9ff" : "inherit",
+                    }}
+                  >
+                    <div>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          marginBottom: 4,
+                        }}
+                      >
+                        <Text strong style={{ fontSize: 16 }}>
+                          No reward, just support the project
+                        </Text>
+                      </div>
+                      <Text type="secondary">
+                        Support without expecting rewards
                       </Text>
                     </div>
-                    <Text type="secondary">
-                      Support without expecting rewards
-                    </Text>
-                  </div>
-                </Radio.Button>
+                  </Radio.Button>
+                )}
 
                 {formattedRewards.length > 0 &&
                   formattedRewards
@@ -491,19 +623,10 @@ const ProjectSidebar = ({ project, rewards = [] }) => {
             rules={[
               { required: true, message: "Please enter your pledge amount" },
               {
-                validator: (_, value) => {
-                  if (!selectedReward) return Promise.resolve();
-                  const minAmount =
-                    formattedRewards.find((r) => r.id === selectedReward)
-                      ?.amount || 0;
-                  return value >= minAmount
+                validator: (_, value) =>
+                  value >= 1
                     ? Promise.resolve()
-                    : Promise.reject(
-                        new Error(
-                          `Minimum amount is $${minAmount.toLocaleString()}`
-                        )
-                      );
-                },
+                    : Promise.reject(new Error("Minimum amount is $1")),
               },
             ]}
           >
@@ -511,22 +634,10 @@ const ProjectSidebar = ({ project, rewards = [] }) => {
               prefix="$"
               type="number"
               size="large"
-              min={
-                selectedReward
-                  ? formattedRewards.find((r) => r.id === selectedReward)
-                      ?.amount || 1
-                  : 1
-              }
+              min={1}
               value={pledgeAmount}
               onChange={handleAmountChange}
-              placeholder={
-                selectedReward
-                  ? `Minimum: ${
-                      formattedRewards.find((r) => r.id === selectedReward)
-                        ?.amount || 0
-                    }$`
-                  : "Enter amount"
-              }
+              placeholder="Enter any amount you want"
               style={{ borderRadius: 4 }}
             />
           </Form.Item>
@@ -536,26 +647,46 @@ const ProjectSidebar = ({ project, rewards = [] }) => {
               message={
                 <div>
                   <Text>
-                    <GiftOutlined /> You'll receive these rewards:
+                    <GiftOutlined /> With ${pledgeAmount}, you'll get:
                   </Text>
-                  <List
-                    size="small"
-                    dataSource={getEligibleRewards(pledgeAmount)}
-                    renderItem={(reward) => (
-                      <List.Item>
-                        <Text strong>{reward.amount.toLocaleString()}$:</Text>{" "}
-                        {reward.description}
-                      </List.Item>
-                    )}
-                  />
-                  {getEligibleRewards(pledgeAmount).length === 0 && (
-                    <Text>No rewards eligible for this amount</Text>
+                  {(() => {
+                    const eligibleRewards = getEligibleRewards(pledgeAmount);
+                    if (eligibleRewards.length > 0) {
+                      return (
+                        <List
+                          size="small"
+                          dataSource={[eligibleRewards[0]]}
+                          renderItem={(reward) => (
+                            <List.Item>
+                              <Text strong>${reward.amount}:</Text>{" "}
+                              {reward.description}
+                            </List.Item>
+                          )}
+                        />
+                      );
+                    }
+                    return (
+                      <Text>No rewards (but thank you for your support!)</Text>
+                    );
+                  })()}
+                  {pledgeAmount >
+                    (formattedRewards[formattedRewards.length - 1]?.amount ||
+                      0) && (
+                    <Text
+                      type="secondary"
+                      style={{ display: "block", marginTop: 8 }}
+                    >
+                      Your pledge includes an additional $
+                      {pledgeAmount -
+                        (formattedRewards[formattedRewards.length - 1]
+                          ?.amount || 0)}
+                      to support the project. Thank you!
+                    </Text>
                   )}
                 </div>
               }
               type="info"
               showIcon
-              style={{ marginBottom: 16 }}
             />
           )}
 
@@ -566,6 +697,7 @@ const ProjectSidebar = ({ project, rewards = [] }) => {
               block
               size="large"
               style={{
+                marginTop: 15,
                 height: 50,
                 fontSize: 16,
                 borderRadius: 4,

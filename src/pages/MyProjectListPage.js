@@ -1,17 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  fetchUserProjects,
-  deleteProject,
-  fetchProjectCategories,
-} from "../api/apiClient";
+import { fetchUserProjects, deleteProject } from "../api/apiClient";
 import {
   Button,
   Table,
   Modal,
   message,
   Space,
-  Tag,
   Typography,
   Divider,
 } from "antd";
@@ -33,36 +28,12 @@ const MyProjectList = () => {
   const [expandedRowKeys, setExpandedRowKeys] = useState([]);
   const navigate = useNavigate();
 
-  const fetchAllProjectsWithCategories = useCallback(async () => {
+  const fetchAllProjects = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetchUserProjects();
       const projectsData = response.data.data || [];
-
-      const projectsWithCategories = await Promise.all(
-        projectsData.map(async (project) => {
-          try {
-            const categoriesResponse = await fetchProjectCategories(
-              project["project-id"]
-            );
-            return {
-              ...project,
-              categories: categoriesResponse.data.data || [],
-            };
-          } catch (error) {
-            console.error(
-              `Failed to load categories for project ${project["project-id"]}`,
-              error
-            );
-            return {
-              ...project,
-              categories: [],
-            };
-          }
-        })
-      );
-
-      setProjects(projectsWithCategories);
+      setProjects(projectsData);
     } catch (error) {
       message.error("Failed to fetch projects");
       console.error(error);
@@ -72,8 +43,8 @@ const MyProjectList = () => {
   }, []);
 
   useEffect(() => {
-    fetchAllProjectsWithCategories();
-  }, [fetchAllProjectsWithCategories]);
+    fetchAllProjects();
+  }, [fetchAllProjects]);
 
   const handleEdit = useCallback(
     (projectId) => {
@@ -163,21 +134,25 @@ const MyProjectList = () => {
         render: (amount) => `${amount.toLocaleString()}$`,
       },
       {
-        title: "Categories",
-        dataIndex: "categories",
-        key: "categories",
-        render: (categories) => (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-            {categories?.length > 0 ? (
-              categories.map((category) => (
-                <Tag key={category["category-id"]} color="blue">
-                  {category.name}
-                </Tag>
-              ))
-            ) : (
-              <span style={{ color: "#999" }}>No categories</span>
-            )}
-          </div>
+        title: "Transaction Status",
+        dataIndex: "transaction-status",
+        key: "transaction-status",
+        render: (status) => (
+          <span
+            style={{
+              color:
+                status === "PENDING"
+                  ? "orange"
+                  : status === "RECEIVING"
+                  ? "blue"
+                  : status === "REFUNDED"
+                  ? "red"
+                  : "black",
+              fontWeight: "bold",
+            }}
+          >
+            {status}
+          </span>
         ),
       },
       {
@@ -224,7 +199,10 @@ const MyProjectList = () => {
         loading={loading}
         expandable={{
           expandedRowRender: (record) => (
-            <RewardList projectId={record["project-id"]} />
+            <RewardList
+              projectId={record["project-id"]}
+              projectStatus={record.status}
+            />
           ),
           expandedRowKeys: expandedRowKeys,
           onExpand: handleExpand,

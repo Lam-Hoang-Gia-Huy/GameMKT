@@ -24,12 +24,13 @@ import {
 
 const { confirm } = Modal;
 
-const RewardList = ({ projectId }) => {
+const RewardList = ({ projectId, projectStatus }) => {
   const [rewards, setRewards] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingReward, setEditingReward] = useState(null);
   const [form] = Form.useForm();
+  const isVisible = projectStatus === "VISIBLE";
 
   useEffect(() => {
     loadRewards();
@@ -39,21 +40,50 @@ const RewardList = ({ projectId }) => {
     setLoading(true);
     try {
       const response = await fetchRewardsByProjectId(projectId);
-      setRewards(response.data.data || []);
+      if (
+        response.status === 400 &&
+        response.data.success === false &&
+        response.data.message === "No rewards found for the given project."
+      ) {
+        message.info("No rewards found for this project.");
+        setRewards([]);
+      } else {
+        setRewards(response.data.data || []);
+      }
     } catch (error) {
-      message.error("Failed to fetch rewards");
+      if (
+        error.response?.status !== 400 ||
+        error.response?.data?.message !==
+          "No rewards found for the given project."
+      ) {
+        message.error("Failed to fetch rewards");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const showEditModal = (reward) => {
+    if (isVisible) {
+      message.warning("Cannot edit rewards for a VISIBLE project");
+      return;
+    }
     setEditingReward(reward);
     form.setFieldsValue(reward);
     setIsModalVisible(true);
   };
 
+  const handleAddReward = () => {
+    setEditingReward(null);
+    form.resetFields();
+    setIsModalVisible(true);
+  };
+
   const handleDelete = (rewardId) => {
+    if (isVisible) {
+      message.warning("Cannot delete rewards for a VISIBLE project");
+      return;
+    }
     confirm({
       title: "Are you sure you want to delete this reward?",
       icon: <ExclamationCircleOutlined />,
@@ -82,6 +112,10 @@ const RewardList = ({ projectId }) => {
       };
 
       if (editingReward) {
+        if (isVisible) {
+          message.warning("Cannot edit rewards for a VISIBLE project");
+          return;
+        }
         await updateReward(editingReward["reward-id"], rewardData);
         message.success("Reward updated successfully");
       } else {
@@ -121,13 +155,18 @@ const RewardList = ({ projectId }) => {
       key: "actions",
       render: (_, record) => (
         <Space size="middle">
-          <Button icon={<EditOutlined />} onClick={() => showEditModal(record)}>
+          <Button
+            icon={<EditOutlined />}
+            onClick={() => showEditModal(record)}
+            disabled={isVisible}
+          >
             Edit
           </Button>
           <Button
             danger
             icon={<DeleteOutlined />}
             onClick={() => handleDelete(record["reward-id"])}
+            disabled={isVisible}
           >
             Delete
           </Button>
@@ -139,11 +178,7 @@ const RewardList = ({ projectId }) => {
   return (
     <div>
       <h2>Rewards</h2>
-      <Button
-        type="primary"
-        icon={<PlusOutlined />}
-        onClick={() => setIsModalVisible(true)}
-      >
+      <Button type="primary" icon={<PlusOutlined />} onClick={handleAddReward}>
         Add Reward
       </Button>
       <Table
@@ -165,7 +200,11 @@ const RewardList = ({ projectId }) => {
             label="Amount"
             rules={[{ required: true, message: "Please enter amount" }]}
           >
-            <InputNumber min={1} style={{ width: "100%" }} />
+            <InputNumber
+              min={1}
+              style={{ width: "100%" }}
+              disabled={isVisible && editingReward}
+            />
           </Form.Item>
           <Form.Item
             name="details"
