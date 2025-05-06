@@ -35,7 +35,7 @@ const ProjectList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
   const [form] = Form.useForm();
-  const [isFilterLoaded, setIsFilterLoaded] = useState(false); // Theo dõi trạng thái tải categories/platforms
+  const [isFilterLoaded, setIsFilterLoaded] = useState(false);
 
   const sortProjectsByStatus = (projects) => {
     const now = new Date();

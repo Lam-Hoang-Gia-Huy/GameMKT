@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Layout,
   Typography,
@@ -33,7 +33,6 @@ import {
   fetchRewardsByProjectId,
   fetchCreatorInfo,
 } from "../api/apiClient";
-import { useNavigate } from "react-router-dom";
 import useAuth from "../components/Hooks/useAuth";
 
 const { Content } = Layout;
@@ -121,10 +120,9 @@ const ProjectDetailPage = () => {
       ),
       children: (
         <div className="project-about">
+          <Title level={4}>Project Story</Title>
           <TipTapViewer content={project?.story} />
-          <Divider />
-          <Title level={4}>Project Description</Title>
-          <Paragraph style={{ fontSize: 16 }}>{project?.description}</Paragraph>
+
           {(creator || project?.creator) && (
             <>
               <Divider />
@@ -242,6 +240,19 @@ const ProjectDetailPage = () => {
             }
           />
         </Card>
+      ) : project.status === "INVISIBLE" || project.status === "DELETED" ? (
+        <Card>
+          <Result
+            status="warning"
+            title="Project Not Visible"
+            subTitle="This project is currently not visible to the public."
+            extra={
+              <Button type="primary" href="/">
+                Browse Projects
+              </Button>
+            }
+          />
+        </Card>
       ) : (
         <Row gutter={[24, 24]} align="top">
           <Col xs={24} lg={16}>
@@ -273,6 +284,7 @@ const ProjectDetailPage = () => {
                   <Title level={2} style={{ marginTop: 8, marginBottom: 4 }}>
                     {project.title}
                   </Title>
+                  <Title level={5}>Description</Title>
                   <Paragraph style={{ fontSize: 16 }}>
                     {project.description}
                   </Paragraph>

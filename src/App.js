@@ -32,6 +32,7 @@ import ProjectBackersPage from "./pages/ProjectBackersPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import PlatformManagement from "./pages/PlatformManagement";
 import CategoryManagement from "./pages/CategoryManagement";
+import Dashboard from "./pages/Dashboard";
 function App() {
   return (
     <Routes>
@@ -81,6 +82,7 @@ function App() {
           <Route path="edit-project/:projectId" element={<UserEditProject />} />
           <Route path="/pledges" element={<PledgesPage />} />
           <Route path="/my-editor-projects" element={<EditorProjects />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/post-managemnent" element={<PostManagement />} />
           <Route path="/project-backers" element={<ProjectBackersPage />} />
           <Route
