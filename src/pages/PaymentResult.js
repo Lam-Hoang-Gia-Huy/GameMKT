@@ -1,12 +1,14 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Result, Button, message } from "antd";
+import { Result, Button, Spin, Space } from "antd";
 import { executePaypalPayment } from "../api/apiClient";
-import { useRef } from "react";
 
 const PaymentResult = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const paymentProcessed = useRef(false);
+  const [status, setStatus] = useState("loading"); // loading, success, error
+  const [errorMessage, setErrorMessage] = useState("");
 
   const queryParams = useMemo(() => {
     const query = new URLSearchParams(location.search);
@@ -17,8 +19,6 @@ const PaymentResult = () => {
       projectId: query.get("projectId"),
     };
   }, [location.search]);
-
-  const paymentProcessed = useRef(false);
 
   useEffect(() => {
     if (paymentProcessed.current) return;
@@ -31,38 +31,88 @@ const PaymentResult = () => {
       executePaypalPayment(paymentId, token, payerId)
         .then((response) => {
           if (response.data.success) {
-            message.success("Payment succeeded!");
+            setStatus("success");
           } else {
-            message.error("Payment failed: " + response.data.message);
+            setStatus("error");
+            setErrorMessage(response.data.message || "Payment failed");
           }
         })
         .catch((error) => {
-          message.error(
-            "Error: " + (error.response?.data?.message || error.message)
+          setStatus("error");
+          setErrorMessage(
+            error.response?.data?.message ||
+              error.message ||
+              "An error occurred"
           );
         });
+    } else {
+      setStatus("error");
+      setErrorMessage("Missing payment parameters");
     }
   }, [queryParams]);
 
+  const renderContent = () => {
+    if (status === "loading") {
+      return (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "50vh",
+          }}
+        >
+          <Spin size="large" tip="Processing payment..." />
+        </div>
+      );
+    }
+
+    if (status === "success") {
+      return (
+        <Result
+          status="success"
+          title="Payment Successful!"
+          subTitle="Thank you for supporting this project."
+          extra={renderButtons()}
+        />
+      );
+    }
+
+    return (
+      <Result
+        status="error"
+        title="Payment Failed"
+        subTitle={errorMessage}
+        extra={renderButtons()}
+      />
+    );
+  };
+
+  const renderButtons = () => {
+    const buttons = [
+      <Button key="home" type="primary" onClick={() => navigate("/")}>
+        Back to Home
+      </Button>,
+    ];
+
+    if (queryParams.projectId) {
+      buttons.push(
+        <Button
+          key="project"
+          onClick={() => navigate(`/project/${queryParams.projectId}`)}
+        >
+          View Project
+        </Button>
+      );
+    }
+
+    return buttons;
+  };
+
   return (
-    <Result
-      status="success"
-      title="Payment Successful!"
-      subTitle="Thank you for supporting this project."
-      extra={[
-        <Button type="primary" key="console" onClick={() => navigate("/")}>
-          Back to Home
-        </Button>,
-        queryParams.projectId && (
-          <Button
-            key="project"
-            onClick={() => navigate(`/project/${queryParams.projectId}`)}
-          >
-            View Project
-          </Button>
-        ),
-      ]}
-    />
+    <div style={{ maxWidth: 800, margin: "0 auto", padding: 24 }}>
+      {renderContent()}
+    </div>
   );
 };
 

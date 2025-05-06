@@ -9,6 +9,9 @@ import {
   Space,
   Typography,
   Divider,
+  Input,
+  Select,
+  DatePicker,
 } from "antd";
 import placeholder from "../assets/placeholder-1-1-1.png";
 import RewardList from "../components/MyProjectListPage/RewardList";
@@ -17,15 +20,24 @@ import {
   DeleteOutlined,
   ExclamationCircleOutlined,
   ProjectOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
+import moment from "moment";
 
 const { confirm } = Modal;
 const { Title, Text } = Typography;
+const { Option } = Select;
+const { RangePicker } = DatePicker;
 
 const MyProjectList = () => {
   const [projects, setProjects] = useState([]);
+  const [filteredProjects, setFilteredProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedRowKeys, setExpandedRowKeys] = useState([]);
+  const [searchName, setSearchName] = useState("");
+  const [projectStatusFilter, setProjectStatusFilter] = useState(null);
+  const [transactionStatusFilter, setTransactionStatusFilter] = useState(null);
+  const [dateRange, setDateRange] = useState([null, null]);
   const navigate = useNavigate();
 
   const fetchAllProjects = useCallback(async () => {
@@ -34,6 +46,7 @@ const MyProjectList = () => {
       const response = await fetchUserProjects();
       const projectsData = response.data.data || [];
       setProjects(projectsData);
+      setFilteredProjects(projectsData);
     } catch (error) {
       message.error("Failed to fetch projects");
       console.error(error);
@@ -45,6 +58,54 @@ const MyProjectList = () => {
   useEffect(() => {
     fetchAllProjects();
   }, [fetchAllProjects]);
+
+  // Apply filters whenever search or filter criteria change
+  useEffect(() => {
+    let filtered = [...projects];
+
+    // Filter by project name
+    if (searchName) {
+      filtered = filtered.filter((project) =>
+        project.title.toLowerCase().includes(searchName.toLowerCase())
+      );
+    }
+
+    // Filter by project status
+    if (projectStatusFilter) {
+      filtered = filtered.filter(
+        (project) => project.status === projectStatusFilter
+      );
+    }
+
+    // Filter by transaction status
+    if (transactionStatusFilter) {
+      filtered = filtered.filter(
+        (project) => project["transaction-status"] === transactionStatusFilter
+      );
+    }
+
+    // Filter by date range
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      filtered = filtered.filter((project) => {
+        const endDate = moment(project["end-datetime"]);
+        const startOfRange = moment(dateRange[0]).startOf("day");
+        const endOfRange = moment(dateRange[1]).endOf("day");
+        return (
+          endDate.isValid() &&
+          endDate.isSameOrAfter(startOfRange, "day") &&
+          endDate.isSameOrBefore(endOfRange, "day")
+        );
+      });
+    }
+
+    setFilteredProjects(filtered);
+  }, [
+    searchName,
+    projectStatusFilter,
+    transactionStatusFilter,
+    dateRange,
+    projects,
+  ]);
 
   const handleEdit = useCallback(
     (projectId) => {
@@ -186,15 +247,49 @@ const MyProjectList = () => {
   };
 
   return (
-    <div>
+    <div style={{ maxWidth: 1500, margin: "0 auto", padding: 24 }}>
       <Title level={2} style={{ marginBottom: 0 }}>
         <ProjectOutlined /> My projects
       </Title>
       <Text type="secondary">List of my own projects</Text>
       <Divider />
+      <Space
+        direction="vertical"
+        size="middle"
+        style={{ width: "100%", marginBottom: 16 }}
+      >
+        <Space wrap>
+          <Input
+            placeholder="Search by project name"
+            prefix={<SearchOutlined />}
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            style={{ width: 200 }}
+          />
+          <Select
+            placeholder="Filter by project status"
+            allowClear
+            onChange={(value) => setProjectStatusFilter(value)}
+            style={{ width: 200 }}
+          >
+            <Option value="VISIBLE">Visible</Option>
+            <Option value="INVISIBLE">Invisible</Option>
+          </Select>
+          <Select
+            placeholder="Filter by transaction status"
+            allowClear
+            onChange={(value) => setTransactionStatusFilter(value)}
+            style={{ width: 300 }}
+          >
+            <Option value="PENDING">Pending</Option>
+            <Option value="RECEIVING">Receiving</Option>
+            <Option value="REFUNDED">Refunded</Option>
+          </Select>
+        </Space>
+      </Space>
       <Table
         columns={columns}
-        dataSource={projects}
+        dataSource={filteredProjects}
         rowKey="project-id"
         loading={loading}
         expandable={{

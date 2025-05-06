@@ -9,6 +9,7 @@ import {
 import TipTapEditor from "../components/TipTapEditor";
 import TipTapViewer from "../components/TipTapViewer";
 import { useNavigate } from "react-router-dom";
+import { ProjectOutlined } from "@ant-design/icons";
 import {
   Select,
   Button,
@@ -242,9 +243,15 @@ const FaqManagementPage = () => {
   };
 
   return (
-    <div className="faq-management-page">
-      <Title level={2}>FAQ Management</Title>
-
+    <div
+      className="faq-management-page"
+      style={{ maxWidth: 1500, margin: "0 auto", padding: 24 }}
+    >
+      <Title level={2} style={{ marginBottom: 0 }}>
+        <QuestionCircleOutlined /> FAQ Management
+      </Title>
+      <Text type="secondary">Manage my project's FAQs</Text>
+      <Divider />
       <Card>
         <Space direction="vertical" style={{ width: "100%" }}>
           <Row align="middle" justify="space-between">

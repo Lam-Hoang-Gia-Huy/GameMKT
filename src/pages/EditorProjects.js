@@ -8,12 +8,17 @@ import {
   Spin,
   Typography,
   List,
+  Divider,
   Tooltip,
 } from "antd";
 import { Link } from "react-router-dom";
 import { apiAuth, getProjectCollaborators } from "../api/apiClient";
 import useAuth from "../components/Hooks/useAuth";
-import { UserOutlined } from "@ant-design/icons";
+import {
+  UserOutlined,
+  ProjectOutlined,
+  UsergroupAddOutlined,
+} from "@ant-design/icons";
 
 const { Title, Text } = Typography;
 
@@ -84,9 +89,11 @@ const EditorProjects = () => {
 
   return (
     <div className="p-5">
-      <Title level={2} className="text-2xl font-bold mb-6">
-        Projects You Can Edit
+      <Title level={2} style={{ marginBottom: 0 }}>
+        <UsergroupAddOutlined /> Collaborative projects
       </Title>
+      <Text type="secondary">List of your Collaborative projects</Text>
+      <Divider />
 
       {projects.length === 0 ? (
         <div className="text-center py-12">

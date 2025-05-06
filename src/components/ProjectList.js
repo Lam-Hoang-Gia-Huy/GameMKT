@@ -81,7 +81,7 @@ const ProjectList = () => {
         setLoading(true);
 
         const defaultFilters = {
-          Status: "VISIBLE",
+          ProjectStatus: "VISIBLE",
           ...filters,
         };
 
@@ -118,7 +118,7 @@ const ProjectList = () => {
   const handleFilterSubmit = (values) => {
     const filters = {
       ...values,
-      Status: "VISIBLE",
+      ProjectStatus: "VISIBLE",
     };
 
     setCurrentPage(1);
@@ -128,7 +128,7 @@ const ProjectList = () => {
   const handleResetFilters = () => {
     form.resetFields();
     setCurrentPage(1);
-    loadProjects({ Status: "VISIBLE" }, 1, pageSize);
+    loadProjects({ ProjectStatus: "VISIBLE" }, 1, pageSize);
   };
 
   const handlePageChange = (page, pageSizeValue) => {

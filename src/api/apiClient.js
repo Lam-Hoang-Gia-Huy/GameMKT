@@ -79,7 +79,7 @@ export const fetchProjects = (filters = {}, pageNumber = 1, pageSize = 6) => {
   });
 };
 export const fetchProject = (id) =>
-  apiBase.get(`/api/Project/GetProjectById?id=${id}`);
+  apiAuth.get(`/api/Project/GetProjectById?id=${id}`);
 export const createProject = (data) => {
   const formData = new FormData();
   formData.append("Title", data.Title);

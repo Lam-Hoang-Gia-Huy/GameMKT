@@ -207,6 +207,7 @@ const UserEditProject = () => {
                     showTime
                     format="YYYY-MM-DD HH:mm:ss"
                     style={{ width: "100%" }}
+                    disabled={projectStatus === "VISIBLE"}
                     disabledDate={(current) => {
                       return current && current < moment().startOf("day");
                     }}
@@ -225,6 +226,7 @@ const UserEditProject = () => {
                     showTime
                     format="YYYY-MM-DD HH:mm:ss"
                     style={{ width: "100%" }}
+                    disabled={projectStatus === "VISIBLE"}
                     disabledDate={(current) => {
                       const startDate = form.getFieldValue("startDatetime");
                       return startDate
