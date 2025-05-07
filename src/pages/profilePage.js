@@ -312,7 +312,27 @@ const ProfilePage = () => {
           <Form.Item label="Bio" name="bio">
             <Input.TextArea />
           </Form.Item>
-          <Form.Item label="New Password" name="password">
+          <Form.Item
+            label="New Password"
+            name="password"
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (!value || value.trim() === "") {
+                    return Promise.resolve();
+                  }
+                  const regex =
+                    /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,15}$/;
+                  if (!regex.test(value)) {
+                    return Promise.reject(
+                      "Password must be 8-15 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)"
+                    );
+                  }
+                  return Promise.resolve();
+                },
+              },
+            ]}
+          >
             <Input.Password placeholder="Leave blank to keep current password" />
           </Form.Item>
         </Form>

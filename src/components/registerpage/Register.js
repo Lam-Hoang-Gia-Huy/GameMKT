@@ -117,12 +117,11 @@ const Register = () => {
           label="Password"
           rules={[
             { required: true, message: "Please input your password!" },
-            { min: 8, message: "Password must be at least 8 characters!" },
             {
               pattern:
-                /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/,
+                /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,15}$/,
               message:
-                "Password must contain at least one letter, one number, and one special character!",
+                "Password must be 8-15 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)!",
             },
           ]}
         >
