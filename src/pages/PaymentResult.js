@@ -7,7 +7,7 @@ const PaymentResult = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const paymentProcessed = useRef(false);
-  const [status, setStatus] = useState("loading"); // loading, success, error
+  const [status, setStatus] = useState("loading");
   const [errorMessage, setErrorMessage] = useState("");
 
   const queryParams = useMemo(() => {

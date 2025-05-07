@@ -14,7 +14,6 @@ function LoginLayout() {
       <Content>
         <Outlet />
       </Content>
-      <Footer />
     </Layout>
   );
 }
