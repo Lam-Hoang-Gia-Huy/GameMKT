@@ -22,6 +22,8 @@ import {
   ProjectOutlined,
   EyeInvisibleOutlined,
 } from "@ant-design/icons";
+import placeholder from "../assets/placeholder-1-1-1.png";
+
 import { fetchPledgesByUserId, fetchProject } from "../api/apiClient";
 import dayjs from "dayjs";
 
@@ -41,11 +43,42 @@ const PledgesPage = () => {
 
         const pledgesWithProjects = await Promise.all(
           pledgeData.map(async (pledge) => {
-            const projectRes = await fetchProject(pledge["project-id"]);
-            return {
-              ...pledge,
-              project: projectRes.data.data,
-            };
+            try {
+              const projectRes = await fetchProject(pledge["project-id"]);
+              return {
+                ...pledge,
+                project: projectRes.data.data || {
+                  id: pledge["project-id"],
+                  title: "Hidden Project",
+                  description:
+                    "This project is currently invisible or deleted.",
+                  thumbnail: placeholder,
+                  status: "Hidden",
+                  "total-amount": 0,
+                  "minimum-amount": 0,
+                  "end-datetime": null,
+                },
+              };
+            } catch (error) {
+              console.error(
+                `Error fetching project ${pledge["project-id"]}:`,
+                error
+              );
+              return {
+                ...pledge,
+                project: {
+                  id: pledge["project-id"],
+                  title: "Hidden Project",
+                  description:
+                    "This project is currently invisible or deleted.",
+                  thumbnail: null,
+                  status: "Hidden",
+                  "total-amount": 0,
+                  "minimum-amount": 0,
+                  "end-datetime": null,
+                },
+              };
+            }
           })
         );
 
@@ -71,7 +104,7 @@ const PledgesPage = () => {
       case "Hidden":
         return (
           <Tag icon={<EyeInvisibleOutlined />} color="green">
-            Completed
+            Hidden
           </Tag>
         );
       case "HALTED":
@@ -177,12 +210,13 @@ const PledgesPage = () => {
         renderItem={(pledge) => {
           const project = pledge.project;
           const pledgeData = pledge;
-          const progressPercent = project["total-amount"]
-            ? Math.min(
-                100,
-                (project["total-amount"] / project["minimum-amount"]) * 100
-              ).toFixed(2)
-            : 0;
+          const progressPercent =
+            project && project["total-amount"] && project["minimum-amount"]
+              ? Math.min(
+                  100,
+                  (project["total-amount"] / project["minimum-amount"]) * 100
+                ).toFixed(2)
+              : 0;
 
           return (
             <List.Item>
@@ -197,7 +231,10 @@ const PledgesPage = () => {
                   <Col xs={24} sm={24} md={8} lg={6}>
                     <Image
                       alt={project.title}
-                      src={project.thumbnail}
+                      src={
+                        project.thumbnail ||
+                        "https://via.placeholder.com/300x180?text=Hidden+Project"
+                      }
                       style={{
                         width: "100%",
                         height: 180,
@@ -205,7 +242,7 @@ const PledgesPage = () => {
                         borderRadius: 4,
                       }}
                       preview={false}
-                      fallback="https://via.placeholder.com/300x180?text=Project+Image"
+                      fallback="https://via.placeholder.com/300x180?text=Hidden+Project"
                     />
                   </Col>
                   <Col xs={24} sm={24} md={16} lg={18}>
@@ -254,7 +291,11 @@ const PledgesPage = () => {
                         </Col>
                         <Col>
                           <Text strong>End Date:</Text>{" "}
-                          {dayjs(project["end-datetime"]).format("MMM D, YYYY")}
+                          {project["end-datetime"]
+                            ? dayjs(project["end-datetime"]).format(
+                                "MMM D, YYYY"
+                              )
+                            : "N/A"}
                         </Col>
                       </Row>
 
