@@ -289,10 +289,14 @@ export const addPlatformToProject = (projectId, platformId) => {
 };
 
 export const removePlatformFromProject = (projectId, platformId) => {
+  const formData = new FormData();
+  formData.append("PlatformId", platformId);
+  formData.append("ProjectId", projectId);
+
   return apiAuth.delete("/api/Platform/project/delete", {
-    data: {
-      "platform-id": platformId,
-      "project-id": projectId,
+    data: formData,
+    headers: {
+      "Content-Type": "multipart/form-data",
     },
   });
 };
