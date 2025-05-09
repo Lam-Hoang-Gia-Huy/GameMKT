@@ -15,6 +15,7 @@ import {
   Image,
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 import {
   createProject,
   updateThumbnail,
@@ -30,6 +31,7 @@ const { Step } = Steps;
 const { TabPane } = Tabs;
 
 const CreateProjectForm = () => {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [projectId, setProjectId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -152,6 +154,7 @@ const CreateProjectForm = () => {
         setThumbnailPreview(null);
         setSelectedCategories([]);
         setSelectedPlatforms([]);
+        navigate(`/edit-project/${projectId}`);
       } catch (error) {
         message.error("Failed to complete project setup");
         throw error;

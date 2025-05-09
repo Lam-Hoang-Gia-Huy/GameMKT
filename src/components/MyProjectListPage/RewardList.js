@@ -74,6 +74,10 @@ const RewardList = ({ projectId, projectStatus }) => {
   };
 
   const handleAddReward = () => {
+    if (isVisible) {
+      message.warning("Cannot add rewards for a VISIBLE project");
+      return;
+    }
     setEditingReward(null);
     form.resetFields();
     setIsModalVisible(true);
@@ -178,7 +182,12 @@ const RewardList = ({ projectId, projectStatus }) => {
   return (
     <div>
       <h2>Rewards</h2>
-      <Button type="primary" icon={<PlusOutlined />} onClick={handleAddReward}>
+      <Button
+        type="primary"
+        icon={<PlusOutlined />}
+        onClick={handleAddReward}
+        disabled={isVisible}
+      >
         Add Reward
       </Button>
       <Table
