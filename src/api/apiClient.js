@@ -342,6 +342,17 @@ export const deleteComment = (commentId) =>
 export const createReport = (detail) => {
   return apiAuth.post("/api/Report/CreateReport", { detail });
 };
+export const addCommentToPost = (postId, content, parentCommentId = "") => {
+  const formData = new FormData();
+  formData.append("PostId", postId);
+  formData.append("Content", content);
+  formData.append("ParentCommentId", parentCommentId);
+  return apiAuth.post("/api/Comment/post", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+export const fetchCommentsByPostId = (postId) =>
+  apiAuth.get(`/api/Comment/GetComment?postId=${postId}`);
 
 export const fetchReportsByUserId = () => {
   return apiAuth.get("/api/Report/GetReportByUserId");

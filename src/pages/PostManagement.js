@@ -18,6 +18,7 @@ import {
   Col,
   Empty,
   Spin,
+  List,
 } from "antd";
 import {
   EditOutlined,
@@ -36,6 +37,7 @@ import {
   fetchPostsByProject,
   updatePost,
   deletePost,
+  fetchCommentsByPostId,
 } from "../api/apiClient";
 
 const { Option } = Select;
@@ -56,6 +58,8 @@ const PostManagement = () => {
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [modalLoading, setModalLoading] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -209,11 +213,25 @@ const PostManagement = () => {
     }
   };
 
-  // Show post details
-  const showViewModal = (postId) => {
+  // Show post details and fetch comments
+  const showViewModal = async (postId) => {
     const post = posts.find((p) => p["post-id"] === postId);
     if (post) {
       setViewPost(post);
+      try {
+        setCommentsLoading(true);
+        const response = await fetchCommentsByPostId(postId);
+        if (response.data.success) {
+          setComments(response.data.data || []);
+        } else {
+          message.error(response.data.message || "Failed to load comments");
+        }
+      } catch (error) {
+        message.error("Error loading comments");
+        console.error(error);
+      } finally {
+        setCommentsLoading(false);
+      }
       setIsViewModalVisible(true);
     } else {
       message.error("Post not found");
@@ -262,7 +280,10 @@ const PostManagement = () => {
       dataIndex: "created-datetime",
       key: "created-datetime",
       width: 180,
-      render: (date) => new Date(date).toLocaleString("en-US"),
+      render: (date) =>
+        new Date(date).toLocaleString("vi-VN", {
+          timeZone: "UTC",
+        }),
     },
     {
       title: "Actions",
@@ -510,6 +531,40 @@ const PostManagement = () => {
             </Space>
             <Card title="Content" bordered={false}>
               <TipTapViewer content={viewPost.description} />
+            </Card>
+            <Card title="Comments" bordered={false}>
+              {commentsLoading ? (
+                <Spin tip="Loading comments..." />
+              ) : comments.length > 0 ? (
+                <List
+                  dataSource={comments}
+                  renderItem={(comment) => (
+                    <List.Item>
+                      <List.Item.Meta
+                        avatar={<div />}
+                        title={
+                          <Text strong>
+                            {comment.user?.fullname || "Anonymous"}
+                          </Text>
+                        }
+                        description={
+                          <div>
+                            <Text>{comment.content}</Text>
+                            <br />
+                            <Text type="secondary">
+                              {new Date(
+                                comment["created-datetime"]
+                              ).toLocaleString("en-US")}
+                            </Text>
+                          </div>
+                        }
+                      />
+                    </List.Item>
+                  )}
+                />
+              ) : (
+                <Text type="secondary">No comments yet.</Text>
+              )}
             </Card>
           </Space>
         ) : (
