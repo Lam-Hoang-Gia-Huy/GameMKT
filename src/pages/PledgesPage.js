@@ -63,9 +63,16 @@ const PledgesPage = () => {
                     },
                   };
                 } else {
-                  message.error(
-                    projectRes.data.message || "Failed to fetch project details"
-                  );
+                  // Nếu API trả về lỗi không phải 401 hoặc message không phải "This project is invisible."
+                  if (
+                    projectRes.data["status-code"] !== 401 ||
+                    projectRes.data.message !== "This project is invisible."
+                  ) {
+                    message.error(
+                      projectRes.data.message ||
+                        "Failed to fetch project details"
+                    );
+                  }
                   return {
                     ...pledge,
                     project: {
@@ -82,6 +89,28 @@ const PledgesPage = () => {
                   };
                 }
               } catch (error) {
+                // Kiểm tra lỗi từ phản hồi API
+                if (
+                  error.response?.data?.["status-code"] === 401 &&
+                  error.response?.data?.message === "This project is invisible."
+                ) {
+                  // Không hiển thị message.error, trả về dự án mặc định
+                  return {
+                    ...pledge,
+                    project: {
+                      id: pledge["project-id"],
+                      title: "Hidden Project",
+                      description:
+                        "This project is currently invisible or deleted.",
+                      thumbnail: placeholder,
+                      status: "Hidden",
+                      "total-amount": 0,
+                      "minimum-amount": 0,
+                      "end-datetime": null,
+                    },
+                  };
+                }
+                // Các lỗi khác thì hiển thị thông báo
                 message.error(
                   error.response?.data?.message ||
                     "Failed to fetch project details"
