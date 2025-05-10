@@ -48,7 +48,7 @@ const { TextArea } = Input;
 
 const ProjectUpdates = ({ projectId, isCreator = false }) => {
   const { auth } = useAuth();
-  const currentUserId = auth?.id ? Number(auth.id) : null; // Convert to number to match API
+  const currentUserId = auth?.id ? Number(auth.id) : null;
 
   const [updates, setUpdates] = useState([]);
   const [selectedUpdate, setSelectedUpdate] = useState(null);
@@ -299,6 +299,11 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
   };
 
   const handleAddComment = async () => {
+    if (auth?.role === "STAFF") {
+      message.warning("Staff users cannot add comments.");
+      return;
+    }
+
     if (!newComment.trim()) {
       message.warning("Please enter a comment");
       return;
@@ -331,6 +336,11 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
   };
 
   const handleAddReply = async (parentCommentId) => {
+    if (auth?.role === "STAFF") {
+      message.warning("Staff users cannot reply to comments.");
+      return;
+    }
+
     if (!replyContent.trim()) {
       message.warning("Please enter a reply");
       return;
@@ -364,11 +374,20 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
   };
 
   const handleEditComment = (comment) => {
+    if (auth?.role === "STAFF") {
+      message.warning("Staff users cannot edit comments.");
+      return;
+    }
     setEditingCommentId(comment["comment-id"]);
     setEditingCommentContent(comment.content);
   };
 
   const handleSaveEditComment = async (commentId) => {
+    if (auth?.role === "STAFF") {
+      message.warning("Staff users cannot edit comments.");
+      return;
+    }
+
     if (!editingCommentContent.trim()) {
       message.warning("Please enter comment content");
       return;
@@ -430,6 +449,10 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
   };
 
   const handleReplyClick = (commentId) => {
+    if (auth?.role === "STAFF") {
+      message.warning("Staff users cannot reply to comments.");
+      return;
+    }
     setReplyingToCommentId(commentId);
     setReplyContent("");
   };
@@ -615,6 +638,18 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
                         </Button>
                       </>
                     )}
+                    {auth?.role === "STAFF" && (
+                      <Button
+                        type="link"
+                        icon={<DeleteOutlined />}
+                        onClick={() =>
+                          handleOpenDeleteCommentModal(comment["comment-id"])
+                        }
+                        style={{ color: "#ff4d4f", padding: "0 8px" }}
+                      >
+                        Delete
+                      </Button>
+                    )}
                   </Space>
                 )}
               </>
@@ -622,18 +657,23 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
             {replyingToCommentId === comment["comment-id"] && (
               <div style={{ marginTop: 12 }}>
                 <TextArea
-                  placeholder="Write a reply..."
+                  placeholder={
+                    auth?.role === "STAFF"
+                      ? "Staff users cannot reply"
+                      : "Write a reply..."
+                  }
                   value={replyContent}
                   onChange={(e) => setReplyContent(e.target.value)}
                   rows={3}
                   style={{ marginBottom: 8, borderRadius: 4 }}
+                  disabled={auth?.role === "STAFF"}
                 />
                 <Space>
                   <Button
                     type="primary"
                     onClick={() => handleAddReply(comment["comment-id"])}
                     loading={actionLoading}
-                    disabled={!currentUserId}
+                    disabled={!currentUserId || auth?.role === "STAFF"}
                     style={{ borderRadius: 4 }}
                   >
                     Post Reply
@@ -840,7 +880,9 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
               <div style={{ marginTop: 24 }}>
                 <TextArea
                   placeholder={
-                    currentUserId
+                    auth?.role === "STAFF"
+                      ? "Staff users cannot comment"
+                      : currentUserId
                       ? "Write a comment..."
                       : "Please log in to comment"
                   }
@@ -848,14 +890,14 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
                   onChange={(e) => setNewComment(e.target.value)}
                   rows={4}
                   style={{ marginBottom: 12, borderRadius: 4 }}
-                  disabled={!currentUserId}
+                  disabled={!currentUserId || auth?.role === "STAFF"}
                 />
                 <Button
                   type="primary"
                   icon={<SendOutlined />}
                   onClick={handleAddComment}
                   loading={actionLoading}
-                  disabled={!currentUserId}
+                  disabled={!currentUserId || auth?.role === "STAFF"}
                   style={{ borderRadius: 4 }}
                 >
                   Post Comment

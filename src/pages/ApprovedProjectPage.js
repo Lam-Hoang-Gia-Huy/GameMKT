@@ -11,21 +11,34 @@ import {
   Input,
   Typography,
   Tag,
-  Button,
+  Tooltip,
   Popconfirm,
   message,
   Input as AntInput,
+  Spin,
+  Select,
+  Space,
 } from "antd";
-import { EyeOutlined, DeleteOutlined } from "@ant-design/icons";
+import {
+  EyeOutlined,
+  DollarOutlined,
+  SwapOutlined,
+  MoneyCollectOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons";
 import placeholder from "../assets/placeholder-1-1-1.png";
 
 const { Search } = Input;
 const { Title } = Typography;
+const { Option } = Select;
 
 const ApprovedProjects = () => {
   const [projects, setProjects] = useState([]);
   const [search, setSearch] = useState("");
   const [reason, setReason] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [transactionStatusFilter, setTransactionStatusFilter] = useState("All");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,6 +47,7 @@ const ApprovedProjects = () => {
 
   const fetchProjects = async () => {
     try {
+      setLoading(true);
       const response = await fetchProjectsAdmin();
       const filteredProjects = response.data.data.filter((p) =>
         ["VISIBLE", "INVISIBLE"].includes(p.status)
@@ -42,11 +56,14 @@ const ApprovedProjects = () => {
     } catch (error) {
       console.error("Error fetching projects", error);
       message.error("Error fetching projects");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleRefund = async (projectId) => {
     try {
+      setLoading(true);
       const response = await refundAllPledges(projectId);
       if (response.data.success) {
         message.success("All pledges refunded successfully");
@@ -57,6 +74,8 @@ const ApprovedProjects = () => {
     } catch (error) {
       console.error("Error refunding pledges", error);
       message.error("Error refunding pledges");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,6 +86,7 @@ const ApprovedProjects = () => {
     }
     const newStatus = currentStatus === "VISIBLE" ? "INVISIBLE" : "VISIBLE";
     try {
+      setLoading(true);
       await staffApproveProject({
         projectId,
         status: newStatus,
@@ -78,22 +98,28 @@ const ApprovedProjects = () => {
     } catch (error) {
       console.error("Error toggling project status", error);
       message.error("Error toggling project status");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (projectId) => {
     try {
+      setLoading(true);
       await deleteProject(projectId);
       message.success("Project deleted successfully");
       fetchProjects();
     } catch (error) {
       console.error("Error deleting project", error);
       message.error("Error deleting project");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleTransfer = async (projectId) => {
     try {
+      setLoading(true);
       const response = await fetch(
         `/api/PaypalPayment/TransferPledgeToCreator`,
         {
@@ -116,6 +142,8 @@ const ApprovedProjects = () => {
     } catch (error) {
       console.error("Error transferring pledges", error);
       message.error("Error transferring pledges");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -127,9 +155,27 @@ const ApprovedProjects = () => {
     return <Tag color={statusColors[status] || "default"}>{status}</Tag>;
   };
 
-  const filteredProjects = projects.filter((p) =>
-    p.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const getTransactionStatusTag = (status) => {
+    const transactionStatusColors = {
+      RECEIVING: "green",
+      PENDING: "yellow",
+      REFUNDED: "red",
+    };
+    return (
+      <Tag color={transactionStatusColors[status] || "default"}>{status}</Tag>
+    );
+  };
+
+  const filteredProjects = projects.filter((p) => {
+    const matchesSearch =
+      p.title.toLowerCase().includes(search.toLowerCase()) ||
+      p.creator.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "All" || p.status === statusFilter;
+    const matchesTransactionStatus =
+      transactionStatusFilter === "All" ||
+      p["transaction-status"] === transactionStatusFilter;
+    return matchesSearch && matchesStatus && matchesTransactionStatus;
+  });
 
   const columns = [
     {
@@ -152,9 +198,18 @@ const ApprovedProjects = () => {
       dataIndex: "title",
     },
     {
+      title: "Creator",
+      dataIndex: "creator",
+    },
+    {
       title: "Status",
       dataIndex: "status",
       render: (status) => getStatusTag(status),
+    },
+    {
+      title: "Transaction Status",
+      dataIndex: "transaction-status",
+      render: (status) => getTransactionStatusTag(status),
     },
     {
       title: "Start Date",
@@ -167,12 +222,12 @@ const ApprovedProjects = () => {
       render: (text) => new Date(text).toLocaleDateString(),
     },
     {
-      title: "Current amount",
+      title: "Current Amount",
       dataIndex: "total-amount",
       render: (amount) => `${amount.toLocaleString()}$`,
     },
     {
-      title: "Min Amount",
+      title: "Required Amount",
       dataIndex: "minimum-amount",
       render: (amount) => `${amount.toLocaleString()}$`,
     },
@@ -180,19 +235,21 @@ const ApprovedProjects = () => {
       title: "Action",
       render: (record) => (
         <div className="flex items-center space-x-4">
-          <EyeOutlined
-            className="text-blue-500 cursor-pointer text-lg"
-            onClick={() => navigate(`/staff/project/${record["project-id"]}`)}
-          />
+          <Tooltip title="View Details">
+            <EyeOutlined
+              className="text-blue-500 cursor-pointer text-lg hover:text-blue-700 transition-colors"
+              onClick={() => navigate(`/staff/project/${record["project-id"]}`)}
+            />
+          </Tooltip>
           <Popconfirm
             title="Are you sure to refund all pledges for this project?"
             onConfirm={() => handleRefund(record["project-id"])}
             okText="Yes"
             cancelText="No"
           >
-            <Button type="primary" danger size="small">
-              Refund
-            </Button>
+            <Tooltip title="Refund Pledges">
+              <DollarOutlined className="text-red-500 cursor-pointer text-lg hover:text-red-700 transition-colors" />
+            </Tooltip>
           </Popconfirm>
           <Popconfirm
             title={
@@ -215,9 +272,9 @@ const ApprovedProjects = () => {
             cancelText="No"
             onCancel={() => setReason("")}
           >
-            <Button type="default" size="small">
-              Toggle Status
-            </Button>
+            <Tooltip title="Toggle Status">
+              <SwapOutlined className="text-gray-500 cursor-pointer text-lg hover:text-gray-700 transition-colors" />
+            </Tooltip>
           </Popconfirm>
           <Popconfirm
             title="Are you sure to transfer pledges to creator?"
@@ -225,9 +282,9 @@ const ApprovedProjects = () => {
             okText="Yes"
             cancelText="No"
           >
-            <Button type="default" size="small">
-              Transfer
-            </Button>
+            <Tooltip title="Transfer Pledges">
+              <MoneyCollectOutlined className="text-green-500 cursor-pointer text-lg hover:text-green-700 transition-colors" />
+            </Tooltip>
           </Popconfirm>
           <Popconfirm
             title="Are you sure to delete this project?"
@@ -235,9 +292,9 @@ const ApprovedProjects = () => {
             okText="Yes"
             cancelText="No"
           >
-            <Button type="default" danger size="small">
-              <DeleteOutlined />
-            </Button>
+            <Tooltip title="Delete Project">
+              <DeleteOutlined className="text-red-500 cursor-pointer text-lg hover:text-red-700 transition-colors" />
+            </Tooltip>
           </Popconfirm>
         </div>
       ),
@@ -249,20 +306,42 @@ const ApprovedProjects = () => {
       <Title level={3} className="mb-4 text-gray-700">
         Approved Projects
       </Title>
-      <div className="mb-4">
-        <Search
-          placeholder="Search project..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          enterButton
-          className="w-1/2"
-        />
-      </div>
+      <Space direction="vertical" style={{ width: "100%", marginBottom: 16 }}>
+        <div className="flex items-center space-x-4">
+          <Search
+            placeholder="Search by project title or creator..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            enterButton
+            className="w-1/3"
+          />
+          <Select
+            value={statusFilter}
+            onChange={(value) => setStatusFilter(value)}
+            style={{ width: 150 }}
+          >
+            <Option value="All">All Statuses</Option>
+            <Option value="VISIBLE">Visible</Option>
+            <Option value="INVISIBLE">Invisible</Option>
+          </Select>
+          <Select
+            value={transactionStatusFilter}
+            onChange={(value) => setTransactionStatusFilter(value)}
+            style={{ width: 200 }}
+          >
+            <Option value="All">All Transaction Statuses</Option>
+            <Option value="RECEIVING">Receiving</Option>
+            <Option value="PENDING">Pending</Option>
+            <Option value="REFUNDED">Refunded</Option>
+          </Select>
+        </div>
+      </Space>
       <Table
         columns={columns}
         dataSource={filteredProjects}
         rowKey={(record) => record["project-id"]}
         className="border rounded-lg shadow-sm"
+        loading={loading}
       />
     </div>
   );

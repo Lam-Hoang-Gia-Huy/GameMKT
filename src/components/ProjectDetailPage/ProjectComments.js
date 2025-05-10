@@ -17,19 +17,19 @@ import {
   CommentOutlined,
 } from "@ant-design/icons";
 import { apiAuth } from "../../api/apiClient";
-import useAuth from "../../components/Hooks/useAuth"; // Import useAuth to get user info
+import useAuth from "../../components/Hooks/useAuth";
 
 const { TextArea } = Input;
 const { Text } = Typography;
 
 const ProjectComments = ({ projectId }) => {
-  const { auth } = useAuth(); // Get auth info
+  const { auth } = useAuth();
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState("");
-  const [replyingComment, setReplyingComment] = useState(null); // Track comment being replied to
-  const [replyText, setReplyText] = useState(""); // Text for replies
+  const [replyingComment, setReplyingComment] = useState(null);
+  const [replyText, setReplyText] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const pageSize = 5;
@@ -54,8 +54,13 @@ const ProjectComments = ({ projectId }) => {
     }
   };
 
-  // Add a new comment or reply
+  // Add a new comment or reply (not available for STAFF)
   const handleAddComment = async (parentCommentId = "") => {
+    if (auth?.role === "STAFF") {
+      message.warning("Staff users cannot add comments or replies.");
+      return;
+    }
+
     const content = parentCommentId ? replyText : newComment;
     if (!content.trim()) {
       message.warning("Comment cannot be empty");
@@ -94,13 +99,22 @@ const ProjectComments = ({ projectId }) => {
     }
   };
 
-  // Edit a comment
+  // Edit a comment (not available for STAFF)
   const handleEditComment = (comment) => {
+    if (auth?.role === "STAFF") {
+      message.warning("Staff users cannot edit comments.");
+      return;
+    }
     setEditingComment(comment);
     setEditText(comment.content);
   };
 
   const handleSaveEdit = async (commentId) => {
+    if (auth?.role === "STAFF") {
+      message.warning("Staff users cannot edit comments.");
+      return;
+    }
+
     if (!editText.trim()) {
       message.warning("Comment cannot be empty");
       return;
@@ -132,7 +146,7 @@ const ProjectComments = ({ projectId }) => {
     }
   };
 
-  // Delete a comment
+  // Delete a comment (available for STAFF and comment owners)
   const handleDeleteComment = async (commentId) => {
     try {
       const response = await apiAuth.delete(
@@ -150,8 +164,12 @@ const ProjectComments = ({ projectId }) => {
     }
   };
 
-  // Start replying to a comment
+  // Start replying to a comment (not available for STAFF)
   const handleReplyComment = (comment) => {
+    if (auth?.role === "STAFF") {
+      message.warning("Staff users cannot reply to comments.");
+      return;
+    }
     setReplyingComment(comment);
     setReplyText("");
   };
@@ -188,7 +206,24 @@ const ProjectComments = ({ projectId }) => {
     >
       <List.Item
         actions={
-          auth?.id === comment["user-id"]
+          auth?.role === "STAFF"
+            ? [
+                <Popconfirm
+                  title="Are you sure you want to delete this comment?"
+                  onConfirm={() => handleDeleteComment(comment["comment-id"])}
+                  okText="Yes"
+                  cancelText="No"
+                >
+                  <Button
+                    type="text"
+                    icon={<DeleteOutlined />}
+                    style={{ color: "#ff4d4f" }}
+                  >
+                    Delete
+                  </Button>
+                </Popconfirm>,
+              ]
+            : auth?.id === comment["user-id"]
             ? [
                 <Button
                   type="text"
@@ -352,14 +387,18 @@ const ProjectComments = ({ projectId }) => {
             rows={2}
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Write a comment..."
+            placeholder={
+              auth?.role === "STAFF"
+                ? "Staff users cannot add comments"
+                : "Write a comment..."
+            }
             style={{ borderRadius: 8 }}
-            disabled={!auth?.id} // Disable if not logged in
+            disabled={!auth?.id || auth?.role === "STAFF"} // Disable for STAFF or if not logged in
           />
           <Button
             type="primary"
             htmlType="submit"
-            disabled={!auth?.id} // Disable if not logged in
+            disabled={!auth?.id || auth?.role === "STAFF"} // Disable for STAFF or if not logged in
             style={{
               marginTop: 8,
               width: "150px",

@@ -518,3 +518,18 @@ export const fetchReportById = (reportId) => {
     },
   });
 };
+export const fetchAllUsers = () => {
+  return apiAuth.get("/api/User/GetAllUser", {
+    headers: {
+      Accept: "*/*",
+    },
+  });
+};
+
+export const deleteUser = (userDeleteId) => {
+  return apiAuth.delete(`/api/User/DeleteUser?UserDeleteId=${userDeleteId}`, {
+    headers: {
+      Accept: "*/*",
+    },
+  });
+};

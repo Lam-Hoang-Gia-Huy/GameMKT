@@ -12,6 +12,7 @@ import {
   FlagOutlined,
   TagsOutlined,
   WindowsOutlined,
+  UsergroupAddOutlined,
   FileExclamationOutlined,
 } from "@ant-design/icons";
 
@@ -39,12 +40,18 @@ const Sidebar = () => {
       //   icon: <EyeInvisibleOutlined />,
       //   description: "Review hidden projects",
       // },
-
+      {
+        key: "11",
+        label: "User monitor",
+        path: "/user-management",
+        icon: <UsergroupAddOutlined />,
+        description: "Monitor user list",
+      },
       {
         key: "12",
         label: "Project monitor",
         path: "/approved-projects",
-        icon: <CheckCircleOutlined />,
+        icon: <ProjectOutlined />,
         description: "See all approved projects",
       },
       {

@@ -34,6 +34,7 @@ import PlatformManagement from "./pages/PlatformManagement";
 import CategoryManagement from "./pages/CategoryManagement";
 import Dashboard from "./pages/Dashboard";
 import Reports from "./pages/ReportManagementPage";
+import UserManagement from "./pages/UserManagementPage";
 function App() {
   return (
     <Routes>
@@ -43,7 +44,7 @@ function App() {
           element={
             <RequireAuth
               restrictedRoles={["STAFF"]}
-              redirectTo="approved-projects"
+              redirectTo="user-management"
             />
           }
         >
@@ -65,6 +66,7 @@ function App() {
         <Route element={<RequireAuth roles={["STAFF"]} />}>
           {/* <Route path="invisible-projects" element={<InvisibleProjects />} /> */}
           <Route path="report-management" element={<Reports />} />
+          <Route path="user-management" element={<UserManagement />} />
 
           <Route path="approved-projects" element={<ApprovedProjects />} />
           <Route

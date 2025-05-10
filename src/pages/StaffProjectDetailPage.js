@@ -19,19 +19,20 @@ import {
   List,
   Input,
   Result,
+  Popconfirm,
 } from "antd";
 import {
   UserOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-  ExclamationCircleOutlined,
   DollarOutlined,
   TeamOutlined,
   CalendarOutlined,
   BulbOutlined,
   MessageOutlined,
   QuestionCircleOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import TipTapViewer from "../components/TipTapViewer";
 import ProjectComments from "../components/ProjectDetailPage/ProjectComments";
@@ -42,8 +43,8 @@ import {
   fetchProject,
   fetchRewardsByProjectId,
   fetchCreatorInfo,
-  fetchProjectCategories,
   staffApproveProject,
+  deleteReward,
 } from "../api/apiClient";
 
 const { Content } = Layout;
@@ -58,7 +59,7 @@ const StaffProjectDetailPage = () => {
   const [rewards, setRewards] = useState([]);
   const [creator, setCreator] = useState(null);
   const [activeTab, setActiveTab] = useState("1");
-  const [categories, setCategories] = useState([]);
+  const [reason, setReason] = useState("");
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -66,12 +67,6 @@ const StaffProjectDetailPage = () => {
         const response = await fetchProject(id);
         if (response.data.success) {
           setProject(response.data.data);
-          const categoriesResponse = await fetchProjectCategories(
-            response.data.data["project-id"] || id
-          );
-          if (categoriesResponse.data.success) {
-            setCategories(categoriesResponse.data.data || []);
-          }
           if (response.data.data["creator-id"]) {
             const creatorResponse = await fetchCreatorInfo(
               response.data.data["creator-id"]
@@ -99,56 +94,28 @@ const StaffProjectDetailPage = () => {
 
   const canApproveOrReject = () => {
     if (!project) return false;
-
-    const now = new Date();
-    const endDate = new Date(project["end-datetime"]);
-
-    return (
-      project.status === "INVISIBLE" ||
-      (project.status === "PENDING" && now < endDate)
-    );
+    return ["VISIBLE", "INVISIBLE"].includes(project.status);
   };
 
-  const handleApprove = (status) => {
-    let reason = "";
-
-    confirm({
-      title: `Are you sure you want to ${
-        status === "APPROVED" ? "approve" : "reject"
-      } this project?`,
-      icon: <ExclamationCircleOutlined />,
-      content:
-        status === "HALTED" ? (
-          <Input.TextArea
-            rows={4}
-            placeholder="Reason..."
-            onChange={(e) => {
-              reason = e.target.value;
-            }}
-          />
-        ) : null,
-      onOk() {
-        return staffApproveProject({
-          projectId: project["project-id"],
-          status,
-          reason: status === "HALTED" ? reason : "",
-        })
-          .then(() => {
-            message.success(
-              `Project ${
-                status === "VISIBLE" ? "approved" : "rejected"
-              } successfully`
-            );
-            setProject((prev) => ({ ...prev, status }));
-          })
-          .catch((error) => {
-            message.error(
-              `Failed to ${status === "VISIBLE" ? "approve" : "reject"} project`
-            );
-            console.error(error);
-          });
-      },
-    });
+  const handleToggleStatus = async (currentStatus) => {
+    if (!reason.trim() && currentStatus !== "VISIBLE") {
+      message.error("Please provide a reason for status change");
+      return;
+    }
+    const newStatus = currentStatus === "VISIBLE" ? "INVISIBLE" : "VISIBLE";
+    try {
+      await staffApproveProject({
+        projectId: project["project-id"],
+        status: newStatus,
+        reason: reason.trim() || "",
+      });
+      message.success(`Project status changed to ${newStatus}`);
+      setReason("");
+      setProject((prev) => ({ ...prev, status: newStatus }));
+    } catch (error) {
+      console.error("Error toggling project status", error);
+      message.error("Error toggling project status");
+    }
   };
 
   const getStatusTag = () => {
@@ -209,19 +176,6 @@ const StaffProjectDetailPage = () => {
           <Paragraph>
             {project?.description || "No description available."}
           </Paragraph>
-          {categories.length > 0 && (
-            <div style={{ marginTop: 8 }}>
-              {categories.map((category) => (
-                <Tag
-                  key={category["category-id"]}
-                  color="blue"
-                  style={{ marginRight: 8, marginBottom: 8 }}
-                >
-                  {category.name}
-                </Tag>
-              ))}
-            </div>
-          )}
 
           {creator && (
             <>
@@ -317,6 +271,24 @@ const StaffProjectDetailPage = () => {
     );
   }
 
+  const handleDeleteReward = async (rewardId) => {
+    try {
+      const response = await deleteReward(rewardId);
+      if (response.data.success) {
+        message.success("Reward deleted successfully");
+        const rewardsResponse = await fetchRewardsByProjectId(
+          project["project-id"]
+        );
+        setRewards(rewardsResponse.data.data || []);
+      } else {
+        message.error("Failed to delete reward");
+      }
+    } catch (error) {
+      console.error("Error deleting reward:", error);
+      message.error("Error deleting reward");
+    }
+  };
+
   return (
     <Content style={{ padding: "24px", maxWidth: 1200, margin: "0 auto" }}>
       <Row gutter={[24, 24]}>
@@ -368,6 +340,32 @@ const StaffProjectDetailPage = () => {
                   {new Date(project["end-datetime"]).toLocaleDateString()}
                 </Text>
               </Space>
+              {project?.categories?.length > 0 && (
+                <div style={{ marginTop: 8 }}>
+                  {project.categories.map((category) => (
+                    <Tag
+                      key={category["category-id"]}
+                      color="blue"
+                      style={{ marginRight: 8, marginBottom: 8 }}
+                    >
+                      {category.name}
+                    </Tag>
+                  ))}
+                </div>
+              )}
+              {project?.platforms?.length > 0 && (
+                <div style={{ marginTop: 8 }}>
+                  {project.platforms.map((platform) => (
+                    <Tag
+                      key={platform["platform-id"]}
+                      color="purple"
+                      style={{ marginRight: 8, marginBottom: 8 }}
+                    >
+                      {platform.name}
+                    </Tag>
+                  ))}
+                </div>
+              )}
             </Space>
           </Card>
 
@@ -381,23 +379,41 @@ const StaffProjectDetailPage = () => {
             {canApproveOrReject() && (
               <Card title="Project Approval">
                 <Space direction="vertical" style={{ width: "100%" }}>
-                  <Button
-                    type="primary"
-                    icon={<CheckCircleOutlined />}
-                    block
-                    onClick={() => handleApprove("VISIBLE")}
+                  <Popconfirm
+                    title={
+                      <div>
+                        <p>{`Change status to ${
+                          project.status === "VISIBLE" ? "INVISIBLE" : "VISIBLE"
+                        }?`}</p>
+                        <Input
+                          placeholder="Enter reason for status change (required for INVISIBLE)"
+                          value={reason}
+                          onChange={(e) => setReason(e.target.value)}
+                          className="mt-2"
+                        />
+                      </div>
+                    }
+                    onConfirm={() => handleToggleStatus(project.status)}
+                    okText="Yes"
+                    cancelText="No"
+                    onCancel={() => setReason("")}
                   >
-                    Approve Project
-                  </Button>
-
-                  <Button
-                    danger
-                    icon={<CloseCircleOutlined />}
-                    block
-                    onClick={() => handleApprove("HALTED")}
-                  >
-                    Reject Project
-                  </Button>
+                    <Button
+                      type={project.status === "VISIBLE" ? "danger" : "primary"}
+                      icon={
+                        project.status === "VISIBLE" ? (
+                          <CloseCircleOutlined />
+                        ) : (
+                          <CheckCircleOutlined />
+                        )
+                      }
+                      block
+                    >
+                      {project.status === "VISIBLE"
+                        ? "Make Invisible"
+                        : "Make Visible"}
+                    </Button>
+                  </Popconfirm>
                 </Space>
               </Card>
             )}
@@ -463,13 +479,45 @@ const StaffProjectDetailPage = () => {
             <Card
               title={`Rewards (${rewards.length})`}
               bodyStyle={{ padding: rewards.length ? "16px" : 0 }}
+              extra={
+                <Button
+                  type="link"
+                  onClick={() => {
+                    setRewards([]);
+                    fetchRewardsByProjectId(project["project-id"]).then(
+                      (response) => {
+                        if (response.data.success) {
+                          setRewards(response.data.data || []);
+                        }
+                      }
+                    );
+                  }}
+                >
+                  Refresh
+                </Button>
+              }
             >
               {rewards.length > 0 ? (
                 <List
                   itemLayout="vertical"
                   dataSource={rewards}
                   renderItem={(reward) => (
-                    <List.Item>
+                    <List.Item
+                      actions={[
+                        <Popconfirm
+                          title="Are you sure to delete this reward?"
+                          onConfirm={() =>
+                            handleDeleteReward(reward["reward-id"])
+                          }
+                          okText="Yes"
+                          cancelText="No"
+                        >
+                          <Button type="link" danger icon={<DeleteOutlined />}>
+                            Delete
+                          </Button>
+                        </Popconfirm>,
+                      ]}
+                    >
                       <Card
                         size="small"
                         style={{
