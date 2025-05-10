@@ -17,7 +17,6 @@ const UserProfilePage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
 
-  // Sample user data
   const [user, setUser] = useState({
     userId: 1,
     email: "user@example.com",

@@ -100,11 +100,13 @@ export const login = (data) => apiBase.post("/api/Authentication/login", data);
 export const getComment = (data) => apiBase.get("/api/Comment", data);
 export const updateProject = (id, data) => {
   const formData = new FormData();
-  formData.append("Name", data.Name);
-  formData.append("MinimumAmount", data.MinimumAmount);
-  formData.append("Description", data.Description);
-  formData.append("StartDatetime", data.StartDatetime);
-  formData.append("EndDatetime", data.EndDatetime);
+
+  if (data.Name) formData.append("Name", data.Name);
+  if (data.Description) formData.append("Description", data.Description);
+  if (data.MinimumAmount != null)
+    formData.append("MinimumAmount", data.MinimumAmount.toString());
+  if (data.StartDatetime) formData.append("StartDatetime", data.StartDatetime);
+  if (data.EndDatetime) formData.append("EndDatetime", data.EndDatetime);
 
   return apiAuth.put(`/api/Project/UpdateProject?projectId=${id}`, formData, {
     headers: {

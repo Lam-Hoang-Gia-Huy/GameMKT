@@ -26,7 +26,7 @@ const PaymentResult = () => {
     const { paymentId, payerId, token } = queryParams;
 
     if (paymentId && payerId && token) {
-      paymentProcessed.current = true; // Mark as processed
+      paymentProcessed.current = true;
 
       executePaypalPayment(paymentId, token, payerId)
         .then((response) => {
@@ -39,11 +39,7 @@ const PaymentResult = () => {
         })
         .catch((error) => {
           setStatus("error");
-          setErrorMessage(
-            error.response?.data?.message ||
-              error.message ||
-              "An error occurred"
-          );
+          setErrorMessage(error.response?.data?.message);
         });
     } else {
       setStatus("error");

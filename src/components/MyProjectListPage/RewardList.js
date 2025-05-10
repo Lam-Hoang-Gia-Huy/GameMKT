@@ -36,29 +36,35 @@ const RewardList = ({ projectId, projectStatus }) => {
 
   useEffect(() => {
     loadRewards();
-  }, []);
+  }, [projectId]);
 
   const loadRewards = async () => {
     setLoading(true);
     try {
       const response = await fetchRewardsByProjectId(projectId);
-      if (
-        response.status === 400 &&
-        response.data.success === false &&
-        response.data.message === "No rewards found for the given project."
-      ) {
-        message.info("No rewards found for this project.");
-        setRewards([]);
-      } else {
+      if (response.data.success) {
         setRewards(response.data.data || []);
+      } else {
+        if (
+          response.data.message === "No rewards found for the given project."
+        ) {
+          message.info("No rewards found for this project.");
+          setRewards([]);
+        } else {
+          message.error(response.data.message || "Failed to fetch rewards");
+        }
       }
     } catch (error) {
       if (
-        error.response?.status !== 400 ||
         error.response?.data?.message !==
-          "No rewards found for the given project."
+        "No rewards found for the given project."
       ) {
-        message.error("Failed to fetch rewards");
+        message.error(
+          error.response?.data?.message || "Failed to fetch rewards"
+        );
+      } else {
+        message.info("No rewards found for this project.");
+        setRewards([]);
       }
     } finally {
       setLoading(false);
@@ -119,11 +125,17 @@ const RewardList = ({ projectId, projectStatus }) => {
       cancelText: "Cancel",
       onOk: async () => {
         try {
-          await deleteReward(rewardId);
-          message.success("Reward deleted successfully");
-          loadRewards();
+          const response = await deleteReward(rewardId);
+          if (response.data.success) {
+            message.success("Reward deleted successfully");
+            loadRewards();
+          } else {
+            message.error(response.data.message || "Failed to delete reward");
+          }
         } catch (error) {
-          message.error("Failed to delete reward");
+          message.error(
+            error.response?.data?.message || "Failed to delete reward"
+          );
         }
       },
     });
@@ -150,11 +162,22 @@ const RewardList = ({ projectId, projectStatus }) => {
           );
           return;
         }
-        await updateReward(editingReward["reward-id"], rewardData);
-        message.success("Reward updated successfully");
+        const response = await updateReward(
+          editingReward["reward-id"],
+          rewardData
+        );
+        if (response.data.success) {
+          message.success("Reward updated successfully");
+        } else {
+          message.error(response.data.message || "Failed to update reward");
+        }
       } else {
-        await addReward(rewardData);
-        message.success("Reward added successfully");
+        const response = await addReward(rewardData);
+        if (response.data.success) {
+          message.success("Reward added successfully");
+        } else {
+          message.error(response.data.message || "Failed to add reward");
+        }
       }
 
       setIsModalVisible(false);
@@ -162,7 +185,7 @@ const RewardList = ({ projectId, projectStatus }) => {
       setEditingReward(null);
       loadRewards();
     } catch (error) {
-      message.error(error.message || "Action failed");
+      message.error(error.message || "Failed to add or update reward");
     }
   };
 
@@ -249,7 +272,7 @@ const RewardList = ({ projectId, projectStatus }) => {
             name="amount"
             label="Amount"
             rules={[
-              { required: true, message: "Please enter amount" },
+              { required: true, message: "Please enter the amount" },
               {
                 validator: async (_, value) => {
                   if (value) {
@@ -265,15 +288,19 @@ const RewardList = ({ projectId, projectStatus }) => {
             <InputNumber
               min={1}
               style={{ width: "100%" }}
+              placeholder="Enter amount (e.g., 10)"
               disabled={isVisible && editingReward}
             />
           </Form.Item>
           <Form.Item
             name="details"
             label="Details"
-            rules={[{ required: true, message: "Please enter details" }]}
+            rules={[{ required: true, message: "Please enter the details" }]}
           >
-            <Input.TextArea rows={3} />
+            <Input.TextArea
+              rows={3}
+              placeholder="Enter reward details (e.g., Exclusive T-shirt for backers)"
+            />
           </Form.Item>
         </Form>
       </Modal>

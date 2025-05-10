@@ -1,13 +1,13 @@
 import React from "react";
 import { Descriptions, Avatar, Typography, Card, Divider } from "antd";
 import {
-  MailOutlined,
   PhoneOutlined,
   CalendarOutlined,
   UserOutlined,
 } from "@ant-design/icons";
+import moment from "moment";
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Paragraph } = Typography;
 
 const CreatorProfile = ({ creator }) => {
   if (!creator) return null;
@@ -35,11 +35,11 @@ const CreatorProfile = ({ creator }) => {
         <Descriptions.Item
           label={
             <>
-              <MailOutlined /> Email
+              <UserOutlined /> User ID
             </>
           }
         >
-          {creator.email || "Not provided"}
+          {creator["user-id"] || "Not provided"}
         </Descriptions.Item>
         {creator.phone && (
           <Descriptions.Item
@@ -59,7 +59,8 @@ const CreatorProfile = ({ creator }) => {
             </>
           }
         >
-          {new Date(creator["created-datetime"]).toLocaleDateString()}
+          {moment(creator["created-datetime"]).format("DD/MM/YYYY") ||
+            "Not provided"}
         </Descriptions.Item>
       </Descriptions>
     </Card>

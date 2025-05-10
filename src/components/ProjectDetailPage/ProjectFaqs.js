@@ -58,11 +58,11 @@ const ProjectFaqs = ({ isCreator = false }) => {
       if (response.data.success) {
         setFaqs(response.data.data || []);
       } else {
-        message.error("Failed to load FAQs");
+        message.error(response.data.message || "Failed to load FAQs");
       }
     } catch (error) {
       console.error("Error fetching FAQs:", error);
-      message.error("Failed to load FAQs");
+      message.error(error.response?.data?.message || "Failed to load FAQs");
     } finally {
       setLoading(false);
     }
@@ -82,7 +82,7 @@ const ProjectFaqs = ({ isCreator = false }) => {
     try {
       const response = await addFaq(id, newQuestion, newAnswer);
       if (response.data.success) {
-        message.success("FAQ added successfully");
+        message.success(response.data.message || "FAQ added successfully");
         setNewQuestion("");
         setNewAnswer("");
         setAddFaqModalVisible(false);
@@ -102,7 +102,7 @@ const ProjectFaqs = ({ isCreator = false }) => {
       }
     } catch (error) {
       console.error("Error adding FAQ:", error);
-      message.error("Failed to add FAQ");
+      message.error(error.response?.data?.message || "Failed to add FAQ");
     } finally {
       setSubmitting(false);
     }
@@ -110,10 +110,6 @@ const ProjectFaqs = ({ isCreator = false }) => {
 
   const handleEditFaq = async () => {
     if (!currentFaq) return;
-    if (!currentFaq.question.trim()) {
-      message.error("Question cannot be empty");
-      return;
-    }
     if (!editAnswer.trim()) {
       message.error("Answer cannot be empty");
       return;
@@ -123,12 +119,12 @@ const ProjectFaqs = ({ isCreator = false }) => {
     try {
       const response = await updateFaq(
         id,
-        currentFaq.originalQuestion,
+        currentFaq.question, // Sử dụng question gốc, không cho phép thay đổi
         currentFaq.question,
         editAnswer
       );
       if (response.data.success) {
-        message.success("FAQ updated successfully");
+        message.success(response.data.message || "FAQ updated successfully");
         setEditFaqModalVisible(false);
         await fetchFaqs();
       } else {
@@ -136,7 +132,7 @@ const ProjectFaqs = ({ isCreator = false }) => {
       }
     } catch (error) {
       console.error("Error updating FAQ:", error);
-      message.error("Failed to update FAQ");
+      message.error(error.response?.data?.message || "Failed to update FAQ");
     } finally {
       setSubmitting(false);
     }
@@ -146,19 +142,19 @@ const ProjectFaqs = ({ isCreator = false }) => {
     try {
       const response = await deleteFaq(id, question);
       if (response.data.success) {
-        message.success("FAQ deleted successfully");
+        message.success(response.data.message || "FAQ deleted successfully");
         await fetchFaqs();
       } else {
         message.error(response.data.message || "Failed to delete FAQ");
       }
     } catch (error) {
       console.error("Error deleting FAQ:", error);
-      message.error("Failed to delete FAQ");
+      message.error(error.response?.data?.message || "Failed to delete FAQ");
     }
   };
 
   const openEditModal = (faq) => {
-    setCurrentFaq({ ...faq, originalQuestion: faq.question });
+    setCurrentFaq(faq);
     setEditAnswer(faq.answer);
     setEditFaqModalVisible(true);
   };
@@ -341,12 +337,7 @@ const ProjectFaqs = ({ isCreator = false }) => {
             <Form.Item label="Question" required>
               <Input
                 value={currentFaq.question}
-                onChange={(e) =>
-                  setCurrentFaq((prev) => ({
-                    ...prev,
-                    question: e.target.value,
-                  }))
-                }
+                disabled // Vô hiệu hóa input để không cho chỉnh sửa
               />
             </Form.Item>
             <Form.Item label="Answer" required>

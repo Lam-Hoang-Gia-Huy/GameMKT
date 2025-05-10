@@ -30,6 +30,7 @@ import TipTapEditor from "../components/TipTapEditor";
 import CategorySelector from "../components/MyProjectListPage/CategorySelector";
 import PlatformSelector from "../components/MyProjectListPage/PlatformSelector";
 import moment from "moment";
+import placeholder from "../assets/placeholder-1-1-1.png";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -57,14 +58,10 @@ const UserEditProject = () => {
       await checkProjectPermissions(projectId);
       return true;
     } catch (error) {
-      if (error.response && error.response.status === 403) {
-        setPermissionError(
-          error.response.data.message ||
-            "You do not have permission to edit this project."
-        );
-      } else {
-        setPermissionError(error.response.data.message);
-      }
+      const errorMessage =
+        error.response?.data?.message ||
+        "You do not have permission to edit this project.";
+      setPermissionError(errorMessage);
       return false;
     }
   };
@@ -83,18 +80,29 @@ const UserEditProject = () => {
         form.setFieldsValue({
           title: project.title,
           description: project.description,
-          startDatetime: moment(project["start-datetime"]),
-          endDatetime: moment(project["end-datetime"]),
+          startDatetime: project["start-datetime"]
+            ? moment(project["start-datetime"])
+            : null,
+          endDatetime: project["end-datetime"]
+            ? moment(project["end-datetime"])
+            : null,
           minimumAmount: project["minimum-amount"],
         });
         setProjectPlatforms(project.platforms || []);
         setProjectCategories(project.categories || []);
         setStory(project.story || "");
         setStoryLoaded(true);
-        setCurrentThumbnail(project.thumbnail);
+        // Chỉ set currentThumbnail nếu thumbnail không phải là "unknown" hoặc giá trị không hợp lệ
+        setCurrentThumbnail(
+          project.thumbnail && project.thumbnail !== "unknown"
+            ? project.thumbnail
+            : null
+        );
         setProjectStatus(project.status || "");
       } catch (error) {
-        message.error("Failed to fetch project details");
+        message.error(
+          error.response?.data?.message || "Failed to fetch project details"
+        );
         console.error(error);
       } finally {
         setLoading(false);
@@ -117,25 +125,35 @@ const UserEditProject = () => {
       message.success("Thumbnail updated successfully");
       setThumbnail(null);
     } catch (error) {
-      message.error("Failed to update thumbnail");
+      message.error(
+        error.response?.data?.message || "Failed to update thumbnail"
+      );
       console.error(error);
     } finally {
       setUpdatingThumbnail(false);
     }
   };
 
-  const handleUpdateStory = async () => {
-    if (!story) {
-      message.warning("Story content cannot be empty");
+  const handleUpdateStory = async (showMessage = true) => {
+    if (!story || story === "No story found.") {
+      if (showMessage) {
+        message.warning("Story content cannot be empty");
+      }
       return;
     }
 
     try {
       setUpdatingStory(true);
       await updateStory(projectId, story);
-      message.success("Story updated successfully");
+      if (showMessage) {
+        message.success("Story updated successfully");
+      }
     } catch (error) {
-      message.error("Failed to update story");
+      if (showMessage) {
+        message.error(
+          error.response?.data?.message || "Failed to update story"
+        );
+      }
       console.error(error);
     } finally {
       setUpdatingStory(false);
@@ -144,24 +162,51 @@ const UserEditProject = () => {
 
   const handleUpdateBasicInfo = async (values) => {
     try {
+      await form.validateFields(["title", "description"]);
       setUpdatingBasic(true);
       const payload = {
         Description: values.description,
         Name: values.title,
-        StartDatetime: values.startDatetime.toISOString(),
-        EndDatetime: values.endDatetime.toISOString(),
       };
 
       if (projectStatus !== "VISIBLE") {
-        payload.MinimumAmount = values.minimumAmount;
-      } else {
-        payload.MinimumAmount = form.getFieldValue("minimumAmount");
+        await form.validateFields([
+          "minimumAmount",
+          "startDatetime",
+          "endDatetime",
+        ]);
+        if (
+          !values.startDatetime ||
+          !values.endDatetime ||
+          !values.minimumAmount
+        ) {
+          message.error(
+            "Please fill in all required fields: Minimum Amount, Start Date, and End Date."
+          );
+          setUpdatingBasic(false);
+          return;
+        }
+        payload.StartDatetime = values.startDatetime.toISOString();
+        payload.EndDatetime = values.endDatetime.toISOString();
+        payload.MinimumAmount = parseFloat(values.minimumAmount);
       }
 
       await updateProject(projectId, payload);
       message.success("Project information updated successfully");
     } catch (error) {
-      message.error("Failed to update project information");
+      if (error.errorFields) {
+        message.error("Please correct the errors in the form.");
+      } else {
+        const errorMessage =
+          error.response?.data?.message ||
+          "Failed to update project information";
+        const detailedErrors = error.response?.data?.errors
+          ? Object.entries(error.response.data.errors)
+              .map(([field, messages]) => `${field}: ${messages.join(", ")}`)
+              .join("; ")
+          : "";
+        message.error(detailedErrors || errorMessage);
+      }
       console.error(error);
     } finally {
       setUpdatingBasic(false);
@@ -183,7 +228,6 @@ const UserEditProject = () => {
     );
   }
 
-  // Render the edit page if no permission error
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
       <h1 style={{ marginBottom: 24 }}>Edit Project</h1>
@@ -222,7 +266,10 @@ const UserEditProject = () => {
                   label="Minimum Amount"
                   name="minimumAmount"
                   rules={[
-                    { required: true, message: "Please input minimum amount!" },
+                    {
+                      required: projectStatus !== "VISIBLE",
+                      message: "Please input minimum amount!",
+                    },
                     {
                       pattern: /^[0-9]+$/,
                       message: "Please input a valid number!",
@@ -239,7 +286,10 @@ const UserEditProject = () => {
                   label="Start Date"
                   name="startDatetime"
                   rules={[
-                    { required: true, message: "Please select start date!" },
+                    {
+                      required: projectStatus !== "VISIBLE",
+                      message: "Please select start date!",
+                    },
                   ]}
                 >
                   <DatePicker
@@ -247,16 +297,19 @@ const UserEditProject = () => {
                     format="YYYY-MM-DD HH:mm:ss"
                     style={{ width: "100%" }}
                     disabled={projectStatus === "VISIBLE"}
-                    disabledDate={(current) => {
-                      return current && current < moment().startOf("day");
-                    }}
+                    disabledDate={(current) =>
+                      current && current < moment().startOf("day")
+                    }
                   />
                 </Form.Item>
                 <Form.Item
                   label="End Date"
                   name="endDatetime"
                   rules={[
-                    { required: true, message: "Please select end date!" },
+                    {
+                      required: projectStatus !== "VISIBLE",
+                      message: "Please select end date!",
+                    },
                   ]}
                   dependencies={["startDatetime"]}
                 >
@@ -332,20 +385,18 @@ const UserEditProject = () => {
               bordered={false}
               style={{ marginBottom: 24 }}
             >
-              {currentThumbnail && (
-                <div style={{ marginBottom: 16, textAlign: "center" }}>
-                  <Image
-                    src={currentThumbnail}
-                    alt="Current Thumbnail"
-                    style={{
-                      maxWidth: "100%",
-                      maxHeight: 300,
-                      borderRadius: 8,
-                      border: "1px solid #f0f0f0",
-                    }}
-                  />
-                </div>
-              )}
+              <div style={{ marginBottom: 16, textAlign: "center" }}>
+                <Image
+                  src={currentThumbnail || placeholder}
+                  alt="Project Thumbnail"
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: 300,
+                    borderRadius: 8,
+                    border: "1px solid #f0f0f0",
+                  }}
+                />
+              </div>
               <Space direction="vertical" style={{ width: "100%" }}>
                 <Upload
                   accept="image/*"
@@ -394,7 +445,7 @@ const UserEditProject = () => {
               )}
               <Button
                 type="primary"
-                onClick={handleUpdateStory}
+                onClick={() => handleUpdateStory(true)}
                 loading={updatingStory}
                 icon={<SaveOutlined />}
                 style={{ marginTop: 16 }}
@@ -419,7 +470,7 @@ const UserEditProject = () => {
             onClick={() => {
               handleUpdateBasicInfo(form.getFieldsValue());
               if (thumbnail) handleUpdateThumbnail();
-              handleUpdateStory();
+              handleUpdateStory(false);
             }}
             loading={updatingBasic || updatingThumbnail || updatingStory}
           >

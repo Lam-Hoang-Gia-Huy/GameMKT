@@ -21,6 +21,7 @@ import {
   BulbOutlined,
   MessageOutlined,
   QuestionCircleOutlined,
+  CalendarOutlined, // Thêm biểu tượng cho ngày
 } from "@ant-design/icons";
 import TipTapViewer from "../components/TipTapViewer";
 import placeholder from "../assets/placeholder-1-1-1.png";
@@ -34,6 +35,7 @@ import {
   fetchCreatorInfo,
 } from "../api/apiClient";
 import useAuth from "../components/Hooks/useAuth";
+import moment from "moment"; // Đảm bảo moment đã được import
 
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -334,6 +336,22 @@ const ProjectDetailPage = () => {
                   <Text>
                     <UserOutlined /> {project?.backers} backers
                   </Text>
+                  {project["start-datetime"] && (
+                    <Text>
+                      <CalendarOutlined /> Start:{" "}
+                      {moment(project["start-datetime"]).format(
+                        "DD/MM/YYYY HH:mm"
+                      )}
+                    </Text>
+                  )}
+                  {project["end-datetime"] && (
+                    <Text>
+                      <CalendarOutlined /> End:{" "}
+                      {moment(project["end-datetime"]).format(
+                        "DD/MM/YYYY HH:mm"
+                      )}
+                    </Text>
+                  )}
                 </Space>
               </Space>
             </Card>
