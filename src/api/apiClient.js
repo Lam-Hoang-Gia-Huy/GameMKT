@@ -544,3 +544,13 @@ export const transferPledgesToCreator = (projectId) => {
     }
   );
 };
+export const checkProjectPermissions = (projectId) => {
+  return apiAuth.get(
+    `/api/Authentication/CheckIfUserHasPermissionsToUpdateOrDeleteByProjectId?projectId=${projectId}`,
+    {
+      headers: {
+        Accept: "*/*",
+      },
+    }
+  );
+};

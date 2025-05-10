@@ -54,13 +54,13 @@ function App() {
         </Route>
 
         {/* 🔐 Admin routes */}
-        <Route element={<RequireAuth roles={["ADMIN"]} />}>
+        {/* <Route element={<RequireAuth roles={["ADMIN"]} />}>
           <Route path="admin/projects" element={<AdminProjectListPage />} />
           <Route
             path="admin/project/:id"
             element={<AdminProjectDetailPage />}
           />
-        </Route>
+        </Route> */}
 
         {/* 🔐 Staff routes */}
         <Route element={<RequireAuth roles={["STAFF"]} />}>
@@ -103,7 +103,7 @@ function App() {
         </Route>
 
         {/* 🔐 Các role chung */}
-        <Route element={<RequireAuth roles={["ADMIN", "STAFF", "CUSTOMER"]} />}>
+        <Route element={<RequireAuth roles={["STAFF", "CUSTOMER"]} />}>
           <Route path="profile" element={<ProfilePage />} />
         </Route>
 

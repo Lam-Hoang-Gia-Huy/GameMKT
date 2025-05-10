@@ -50,18 +50,23 @@ const ProjectBackersPage = () => {
     const loadProjects = async () => {
       try {
         const res = await fetchUserProjects();
-        const allProjects = res.data.data || [];
-        // Sắp xếp projects: total-amount > 0 lên đầu, total-amount = 0 xuống cuối
-        const sortedProjects = allProjects.sort((a, b) => {
-          if (a["total-amount"] > 0 && b["total-amount"] === 0) return -1;
-          if (a["total-amount"] === 0 && b["total-amount"] > 0) return 1;
-          return 0; // Giữ nguyên thứ tự nếu cả hai đều > 0 hoặc đều = 0
-        });
-        setProjects(sortedProjects);
-        setFilteredProjects(sortedProjects);
+        if (res.data.success) {
+          const allProjects = res.data.data || [];
+          // Sắp xếp projects: total-amount > 0 lên đầu, total-amount = 0 xuống cuối
+          const sortedProjects = allProjects.sort((a, b) => {
+            if (a["total-amount"] > 0 && b["total-amount"] === 0) return -1;
+            if (a["total-amount"] === 0 && b["total-amount"] > 0) return 1;
+            return 0; // Giữ nguyên thứ tự nếu cả hai đều > 0 hoặc đều = 0
+          });
+          setProjects(sortedProjects);
+          setFilteredProjects(sortedProjects);
+        } else {
+          message.error(res.data.message || "Failed to load projects");
+        }
       } catch (error) {
-        console.error("Error loading projects:", error);
-        message.error("Failed to load projects.");
+        message.error(
+          error.response?.data?.message || "Failed to load projects"
+        );
       } finally {
         setLoadingProjects(false);
       }
@@ -69,16 +74,14 @@ const ProjectBackersPage = () => {
     loadProjects();
   }, []);
 
-  // Handle search by project title
   useEffect(() => {
     const filtered = projects.filter((project) =>
       project.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredProjects(filtered);
-    setProjectCurrentPage(1); // Reset to first page on search
+    setProjectCurrentPage(1);
   }, [searchTerm, projects]);
 
-  // Fetch backers for a selected project
   const fetchBackers = async (projectId) => {
     setLoadingBackers(true);
     try {
@@ -92,11 +95,21 @@ const ProjectBackersPage = () => {
           },
         }
       );
-      setBackers(response.data.data || []);
-      setSelectedProject(projectId);
+      if (response.data.success) {
+        setBackers(response.data.data || []);
+        setSelectedProject(projectId);
+      } else {
+        message.error(
+          response.data.message ||
+            "No pledges found for the specified user and project"
+        );
+        setBackers([]);
+      }
     } catch (error) {
-      console.error("Error fetching backers:", error);
-      message.error("No pledges found for the specified user and project.");
+      message.error(
+        error.response?.data?.message ||
+          "No pledges found for the specified user and project"
+      );
       setBackers([]);
     } finally {
       setLoadingBackers(false);
@@ -122,8 +135,9 @@ const ProjectBackersPage = () => {
       window.URL.revokeObjectURL(url);
       message.success("Excel file downloaded successfully!");
     } catch (error) {
-      console.error("Error exporting backers to Excel:", error);
-      message.error("Failed to export backers to Excel.");
+      message.error(
+        error.response?.data?.message || "Failed to export backers to Excel"
+      );
     }
   };
 

@@ -87,11 +87,12 @@ const PostManagement = () => {
             response.data.data.filter((project) => project.status !== "DELETED")
           );
         } else {
-          message.error("Failed to load projects");
+          message.error(response.data.message || "Failed to load projects");
         }
       } catch (error) {
-        message.error("Error loading projects");
-        console.error(error);
+        message.error(
+          error.response?.data?.message || "Error loading projects"
+        );
       } finally {
         setProjectsLoading(false);
       }
@@ -130,11 +131,10 @@ const PostManagement = () => {
           total: response.data.data["total-records"] || 0,
         });
       } else {
-        message.error("Failed to load posts");
+        message.error(response.data.message || "Failed to load posts");
       }
     } catch (error) {
-      message.error("Error loading posts");
-      console.error(error);
+      message.error(error.response?.data?.message || "Error loading posts");
     } finally {
       setLoading(false);
     }
@@ -192,8 +192,7 @@ const PostManagement = () => {
       if (error.errorFields) {
         return;
       }
-      message.error("Failed to save post");
-      console.error(error);
+      message.error(error.response?.data?.message || "Failed to save post");
     } finally {
       setModalLoading(false);
     }
@@ -206,8 +205,7 @@ const PostManagement = () => {
       message.success("Post deleted successfully");
       fetchPosts(selectedProjectId, pagination.current, pagination.pageSize);
     } catch (error) {
-      message.error("Failed to delete post");
-      console.error(error);
+      message.error(error.response?.data?.message || "Failed to delete post");
     } finally {
       setLoading(false);
     }
@@ -227,8 +225,9 @@ const PostManagement = () => {
           message.error(response.data.message || "Failed to load comments");
         }
       } catch (error) {
-        message.error("Error loading comments");
-        console.error(error);
+        message.error(
+          error.response?.data?.message || "Error loading comments"
+        );
       } finally {
         setCommentsLoading(false);
       }

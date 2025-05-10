@@ -22,11 +22,22 @@ const ReportList = () => {
       if (response.data.success) {
         setReports(response.data.data || []);
       } else {
-        setError(response.data.message || "Failed to fetch reports.");
+        if (response.data.message === "No reports found for this user.") {
+          setReports([]);
+        } else {
+          setError(response.data.message || "Failed to fetch reports.");
+        }
       }
     } catch (err) {
       console.error("Error fetching reports:", err);
-      setError("An error occurred while fetching reports. Please try again.");
+      if (
+        err.response?.status === 400 &&
+        err.response?.data?.message === "No reports found for this user."
+      ) {
+        setReports([]);
+      } else {
+        setError("An error occurred while fetching reports. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

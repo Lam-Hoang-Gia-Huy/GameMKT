@@ -110,11 +110,11 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
         setUpdates(updatesData);
         setTotalUpdates(response.data.data["total-records"] || 0);
       } else {
-        message.error("Failed to load updates");
+        message.error(response.data.message || "Failed to load updates");
       }
     } catch (error) {
+      message.error(error.response?.data?.message || "Error loading updates");
       console.error("Error fetching updates:", error);
-      message.error("Error loading updates");
     } finally {
       setLoading(false);
     }
@@ -152,8 +152,8 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
         message.error(response.data.message || "Failed to load comments");
       }
     } catch (error) {
+      message.error(error.response?.data?.message || "Error loading comments");
       console.error("Error fetching comments:", error);
-      message.error("Error loading comments");
     } finally {
       setCommentsLoading(false);
     }
@@ -211,8 +211,8 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
         message.error(response.data.message || "Failed to add update");
       }
     } catch (error) {
+      message.error(error.response?.data?.message || "Error adding update");
       console.error("Error adding update:", error);
-      message.error("Error adding update");
     } finally {
       setActionLoading(false);
     }
@@ -259,8 +259,8 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
         message.error(response.data.message || "Failed to update post");
       }
     } catch (error) {
+      message.error(error.response?.data?.message || "Error updating post");
       console.error("Error updating post:", error);
-      message.error("Error updating post");
     } finally {
       setActionLoading(false);
     }
@@ -291,8 +291,8 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
         message.error(response.data.message || "Failed to delete update");
       }
     } catch (error) {
+      message.error(error.response?.data?.message || "Error deleting update");
       console.error("Error deleting update:", error);
-      message.error("Error deleting update");
     } finally {
       setActionLoading(false);
     }
@@ -328,8 +328,8 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
         message.error(response.data.message || "Failed to add comment");
       }
     } catch (error) {
+      message.error(error.response?.data?.message || "Error adding comment");
       console.error("Error adding comment:", error);
-      message.error("Error adding comment");
     } finally {
       setActionLoading(false);
     }
@@ -366,8 +366,8 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
         message.error(response.data.message || "Failed to add reply");
       }
     } catch (error) {
+      message.error(error.response?.data?.message || "Error adding reply");
       console.error("Error adding reply:", error);
-      message.error("Error adding reply");
     } finally {
       setActionLoading(false);
     }
@@ -405,8 +405,8 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
         message.error(response.data.message || "Failed to update comment");
       }
     } catch (error) {
+      message.error(error.response?.data?.message || "Error updating comment");
       console.error("Error updating comment:", error);
-      message.error("Error updating comment");
     } finally {
       setActionLoading(false);
     }
@@ -441,8 +441,8 @@ const ProjectUpdates = ({ projectId, isCreator = false }) => {
         message.error(response.data.message || "Failed to delete comment");
       }
     } catch (error) {
+      message.error(error.response?.data?.message || "Error deleting comment");
       console.error("Error deleting comment:", error);
-      message.error("Error deleting comment");
     } finally {
       setActionLoading(false);
     }

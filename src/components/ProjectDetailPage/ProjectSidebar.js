@@ -429,7 +429,6 @@ const ProjectSidebar = ({ project, rewards = [] }) => {
                     >
                       {reward.description || "No reward details provided"}
                     </Paragraph>
-                    pousser{" "}
                     <Divider
                       style={{
                         margin: "12px 0",

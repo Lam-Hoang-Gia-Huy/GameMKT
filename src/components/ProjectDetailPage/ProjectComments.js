@@ -47,7 +47,7 @@ const ProjectComments = ({ projectId }) => {
         message.error(response.data.message || "Failed to fetch comments");
       }
     } catch (error) {
-      message.error("Error fetching comments");
+      message.error(error.response?.data?.message || "Error fetching comments");
       console.error(error);
     } finally {
       setLoading(false);
@@ -89,12 +89,12 @@ const ProjectComments = ({ projectId }) => {
         } else {
           setNewComment("");
         }
-        fetchComments(); // Refresh comments
+        fetchComments();
       } else {
         message.error(response.data.message || "Failed to add comment");
       }
     } catch (error) {
-      message.error("Error adding comment");
+      message.error(error.response?.data?.message || "Error adding comment");
       console.error(error);
     }
   };
@@ -136,12 +136,12 @@ const ProjectComments = ({ projectId }) => {
         message.success("Comment updated successfully");
         setEditingComment(null);
         setEditText("");
-        fetchComments(); // Refresh comments
+        fetchComments();
       } else {
         message.error(response.data.message || "Failed to update comment");
       }
     } catch (error) {
-      message.error("Error updating comment");
+      message.error(error.response?.data?.message || "Error updating comment");
       console.error(error);
     }
   };
@@ -154,12 +154,12 @@ const ProjectComments = ({ projectId }) => {
       );
       if (response.data.success) {
         message.success("Comment deleted successfully");
-        fetchComments(); // Refresh comments
+        fetchComments();
       } else {
         message.error(response.data.message || "Failed to delete comment");
       }
     } catch (error) {
-      message.error("Error deleting comment");
+      message.error(error.response?.data?.message || "Error deleting comment");
       console.error(error);
     }
   };
@@ -200,7 +200,7 @@ const ProjectComments = ({ projectId }) => {
         borderRadius: 12,
         marginBottom: 12,
         background: "#f9f9f9",
-        marginLeft: level * 20, // Indent nested comments
+        marginLeft: level * 20,
       }}
       key={comment["comment-id"]}
     >
@@ -393,12 +393,12 @@ const ProjectComments = ({ projectId }) => {
                 : "Write a comment..."
             }
             style={{ borderRadius: 8 }}
-            disabled={!auth?.id || auth?.role === "STAFF"} // Disable for STAFF or if not logged in
+            disabled={!auth?.id || auth?.role === "STAFF"}
           />
           <Button
             type="primary"
             htmlType="submit"
-            disabled={!auth?.id || auth?.role === "STAFF"} // Disable for STAFF or if not logged in
+            disabled={!auth?.id || auth?.role === "STAFF"}
             style={{
               marginTop: 8,
               width: "150px",

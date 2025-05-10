@@ -92,9 +92,8 @@ const EditorProjects = () => {
         );
         setCollaborators(collaboratorsData);
       } catch (error) {
-        console.error(
-          "Error fetching editor projects or collaborators:",
-          error
+        message.error(
+          error.response?.data?.message || "Failed to fetch projects"
         );
       } finally {
         setLoading(false);
@@ -114,11 +113,10 @@ const EditorProjects = () => {
       if (response.data.success) {
         setPosts(response.data.data["list-data"] || []);
       } else {
-        message.error("Failed to load posts");
+        message.error(response.data.message || "Failed to load posts");
       }
     } catch (error) {
-      message.error("Error loading posts");
-      console.error(error);
+      message.error(error.response?.data?.message || "Error loading posts");
     } finally {
       setPostLoading(false);
     }
@@ -172,8 +170,7 @@ const EditorProjects = () => {
       fetchPosts(selectedProjectId);
       setIsPostModalVisible(false);
     } catch (error) {
-      message.error("Failed to save post");
-      console.error(error);
+      message.error(error.response?.data?.message || "Failed to save post");
     } finally {
       setModalLoading(false);
     }
@@ -186,8 +183,7 @@ const EditorProjects = () => {
       message.success("Post deleted successfully");
       fetchPosts(selectedProjectId);
     } catch (error) {
-      message.error("Failed to delete post");
-      console.error(error);
+      message.error(error.response?.data?.message || "Failed to delete post");
     } finally {
       setPostLoading(false);
     }
@@ -204,8 +200,7 @@ const EditorProjects = () => {
         message.error(response.data.message || "Failed to load comments");
       }
     } catch (error) {
-      message.error("Error loading comments");
-      console.error(error);
+      message.error(error.response?.data?.message || "Error loading comments");
     } finally {
       setCommentsLoading(false);
     }
@@ -225,7 +220,7 @@ const EditorProjects = () => {
     }
   };
 
-  const postColumns = [
+  const postColumns = (isViewer) => [
     {
       title: "Title",
       dataIndex: "title",
@@ -254,21 +249,25 @@ const EditorProjects = () => {
             onClick={() => showViewPostModal(record)}
             type="link"
           />
-          <Button
-            icon={<EditOutlined />}
-            onClick={() => showPostModal(record)}
-            type="link"
-          />
-          <Popconfirm
-            title="Delete Post"
-            description="Are you sure you want to delete this post?"
-            onConfirm={() => handleDeletePost(record["post-id"])}
-            okText="Delete"
-            cancelText="Cancel"
-            icon={<ExclamationCircleOutlined style={{ color: "red" }} />}
-          >
-            <Button icon={<DeleteOutlined />} type="link" danger />
-          </Popconfirm>
+          {!isViewer && (
+            <>
+              <Button
+                icon={<EditOutlined />}
+                onClick={() => showPostModal(record)}
+                type="link"
+              />
+              <Popconfirm
+                title="Delete Post"
+                description="Are you sure you want to delete this post?"
+                onConfirm={() => handleDeletePost(record["post-id"])}
+                okText="Delete"
+                cancelText="Cancel"
+                icon={<ExclamationCircleOutlined style={{ color: "red" }} />}
+              >
+                <Button icon={<DeleteOutlined />} type="link" danger />
+              </Popconfirm>
+            </>
+          )}
         </Space>
       ),
     },
@@ -309,108 +308,118 @@ const EditorProjects = () => {
       ) : (
         <>
           <Row gutter={[16, 16]}>
-            {paginatedProjects.map((item) => (
-              <Col key={item["project-id"]} xs={24} sm={12} md={8} lg={6}>
-                <Card
-                  hoverable
-                  cover={
-                    <img
-                      alt={item.project.title}
-                      src={
-                        item.project.thumbnail ||
-                        "https://via.placeholder.com/300"
-                      }
-                      className="h-40 object-cover"
-                    />
-                  }
-                  actions={[
-                    <Button type="primary" className="bg-blue-500">
-                      <Link
-                        style={{ color: "white" }}
-                        to={`/edit-project/${item["project-id"]}`}
-                      >
-                        Edit Project
-                      </Link>
-                    </Button>,
-                    <Button
-                      type="primary"
-                      className="bg-blue-500"
-                      onClick={() => handleProjectSelect(item["project-id"])}
-                    >
-                      Manage Posts
-                    </Button>,
-                  ]}
-                  className="shadow-md"
-                >
-                  <Card.Meta
-                    title={
-                      <span className="text-lg font-semibold">
-                        {item.project.title}
-                      </span>
+            {paginatedProjects.map((item) => {
+              const isViewer = item.role === "VIEWER";
+              return (
+                <Col key={item["project-id"]} xs={24} sm={12} md={8} lg={6}>
+                  <Card
+                    hoverable
+                    cover={
+                      <img
+                        alt={item.project.title}
+                        src={
+                          item.project.thumbnail ||
+                          "https://via.placeholder.com/300"
+                        }
+                        className="h-40 object-cover"
+                      />
                     }
-                    description={
-                      <Text
-                        ellipsis={{ tooltip: item.project.description }}
-                        className="text-gray-600"
-                      >
-                        {item.project.description}
-                      </Text>
-                    }
-                  />
-                  <div className="mt-4">
-                    <Text strong className="text-gray-700">
-                      Your Role:{" "}
-                    </Text>
-                    <Text className="text-gray-600">{item.role}</Text>
-                  </div>
-                  <div className="mt-4">
-                    <Text strong className="text-gray-700">
-                      Collaborators:
-                    </Text>
-                    <List
-                      dataSource={collaborators[item["project-id"]] || []}
-                      renderItem={(collab) => (
-                        <Tooltip
-                          title={`User Role: ${collab.user.role}`}
-                          placement="top"
+                    actions={[
+                      !isViewer && (
+                        <Button
+                          key="edit"
+                          type="primary"
+                          className="bg-blue-500"
                         >
-                          <List.Item className="py-2 hover:bg-gray-100 rounded transition">
-                            <div className="flex items-center space-x-3">
-                              {collab.user.avatar ? (
-                                <img
-                                  src={collab.user.avatar}
-                                  alt={collab.user.fullname}
-                                  className="w-8 h-8 rounded-full object-cover"
-                                />
-                              ) : (
-                                <UserOutlined className="text-xl text-gray-400" />
-                              )}
-                              <div>
-                                <Text className="text-gray-800 font-medium">
-                                  {collab.user.fullname}
-                                </Text>
-                                <Text className="text-gray-500 text-sm block">
-                                  {collab.role}
-                                </Text>
-                              </div>
-                            </div>
-                          </List.Item>
-                        </Tooltip>
-                      )}
-                      locale={{
-                        emptyText: (
-                          <div className="text-center py-4 text-gray-500">
-                            <UserOutlined className="text-2xl mb-2" />
-                            <div>No collaborators</div>
-                          </div>
-                        ),
-                      }}
-                      className="mt-2"
+                          <Link
+                            style={{ color: "white" }}
+                            to={`/edit-project/${item["project-id"]}`}
+                          >
+                            Edit Project
+                          </Link>
+                        </Button>
+                      ),
+                      <Button
+                        key="manage"
+                        type="primary"
+                        className="bg-blue-500"
+                        onClick={() => handleProjectSelect(item["project-id"])}
+                      >
+                        Manage Posts
+                      </Button>,
+                    ].filter(Boolean)}
+                    className="shadow-md"
+                  >
+                    <Card.Meta
+                      title={
+                        <span className="text-lg font-semibold">
+                          {item.project.title}
+                        </span>
+                      }
+                      description={
+                        <Text
+                          ellipsis={{ tooltip: item.project.description }}
+                          className="text-gray-600"
+                        >
+                          {item.project.description}
+                        </Text>
+                      }
                     />
-                  </div>
-                </Card>
-              </Col>
-            ))}
+                    <div className="mt-4">
+                      <Text strong className="text-gray-700">
+                        Your Role:{" "}
+                      </Text>
+                      <Text className="text-gray-600">{item.role}</Text>
+                    </div>
+                    <div className="mt-4">
+                      <Text strong className="text-gray-700">
+                        Collaborators:
+                      </Text>
+                      <List
+                        dataSource={collaborators[item["project-id"]] || []}
+                        renderItem={(collab) => (
+                          <Tooltip
+                            title={`User Role: ${collab.user.role}`}
+                            placement="top"
+                          >
+                            <List.Item className="py-2 hover:bg-gray-100 rounded transition">
+                              <div className="flex items-center space-x-3">
+                                {collab.user.avatar ? (
+                                  <img
+                                    src={collab.user.avatar}
+                                    alt={collab.user.fullname}
+                                    className="w-8 h-8 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <UserOutlined className="text-xl text-gray-400" />
+                                )}
+                                <div>
+                                  <Text className="text-gray-800 font-medium">
+                                    {collab.user.fullname}
+                                  </Text>
+                                  <Text className="text-gray-500 text-sm block">
+                                    {collab.role}
+                                  </Text>
+                                </div>
+                              </div>
+                            </List.Item>
+                          </Tooltip>
+                        )}
+                        locale={{
+                          emptyText: (
+                            <div className="text-center py-4 text-gray-500">
+                              <UserOutlined className="text-2xl mb-2" />
+                              <div>No collaborators</div>
+                            </div>
+                          ),
+                        }}
+                        className="mt-2"
+                      />
+                    </div>
+                  </Card>
+                </Col>
+              );
+            })}
           </Row>
 
           <Row justify="center" className="mt-6">
@@ -428,38 +437,46 @@ const EditorProjects = () => {
       )}
 
       {/* Post Management Modal */}
-      <Modal
-        title={`Posts for ${
-          projects.find((p) => p["project-id"] === selectedProjectId)?.title ||
-          "Project"
-        }`}
-        open={!!selectedProjectId}
-        onCancel={() => handleProjectSelect(null)}
-        width="80%"
-        footer={[
-          <Button
-            key="add"
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => showPostModal()}
-          >
-            Add Post
-          </Button>,
-          <Button key="close" onClick={() => handleProjectSelect(null)}>
-            Close
-          </Button>,
-        ]}
-      >
-        <Table
-          columns={postColumns}
-          dataSource={posts}
-          rowKey="post-id"
-          loading={postLoading}
-          locale={{
-            emptyText: "No posts available for this project",
-          }}
-        />
-      </Modal>
+      {selectedProjectId && (
+        <Modal
+          title={`Posts for ${
+            projects.find((p) => p["project-id"] === selectedProjectId)?.project
+              .title || "Project"
+          }`}
+          open={!!selectedProjectId}
+          onCancel={() => handleProjectSelect(null)}
+          width="80%"
+          footer={[
+            projects.find((p) => p["project-id"] === selectedProjectId)
+              ?.role !== "VIEWER" && (
+              <Button
+                key="add"
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => showPostModal()}
+              >
+                Add Post
+              </Button>
+            ),
+            <Button key="close" onClick={() => handleProjectSelect(null)}>
+              Close
+            </Button>,
+          ].filter(Boolean)}
+        >
+          <Table
+            columns={postColumns(
+              projects.find((p) => p["project-id"] === selectedProjectId)
+                ?.role === "VIEWER"
+            )}
+            dataSource={posts}
+            rowKey="post-id"
+            loading={postLoading}
+            locale={{
+              emptyText: "No posts available for this project",
+            }}
+          />
+        </Modal>
+      )}
 
       {/* Post Edit/Create Modal */}
       <Modal

@@ -46,23 +46,29 @@ const ProfilePage = () => {
             },
           }
         );
-        const userData = res.data?.data;
-        setAuth((prev) => ({
-          ...prev,
-          fullname: userData?.["full-name"],
-          avatar: userData?.avatar,
-          bio: userData?.bio,
-          phone: userData?.phone,
-          paymentAccount: userData?.["payment-account"],
-          createdDate: userData?.["created-datetime"],
-          email: userData?.email,
-        }));
+        if (res.data.success) {
+          const userData = res.data?.data;
+          setAuth((prev) => ({
+            ...prev,
+            fullname: userData?.["full-name"],
+            avatar: userData?.avatar,
+            bio: userData?.bio,
+            phone: userData?.phone,
+            paymentAccount: userData?.["payment-account"],
+            createdDate: userData?.["created-datetime"],
+            email: userData?.email,
+          }));
+        } else {
+          message.error(res.data.message || "Failed to fetch user data");
+        }
       } catch (error) {
-        console.error("Error when fetching user:", error);
+        message.error(
+          error.response?.data?.message || "Failed to fetch user data"
+        );
       }
     };
     fetchUserData();
-  }, [auth?.token]);
+  }, [auth?.token, setAuth]);
 
   const showModal = () => {
     form.setFieldsValue({
@@ -80,7 +86,9 @@ const ProfilePage = () => {
     });
     setIsVerifyModalOpen(true);
   };
+
   const isVerified = auth?.phone && auth?.paymentAccount;
+
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
@@ -106,31 +114,37 @@ const ProfilePage = () => {
         }
       );
 
-      setLoading(false);
-      message.success("Update information successfully!");
+      if (res.data.success) {
+        setLoading(false);
+        message.success("Update information successfully!");
 
-      setAuth((prev) => ({
-        ...prev,
-        fullname: values.fullname,
-        email: values.email,
-        bio: values.bio,
-      }));
-
-      localStorage.setItem(
-        "auth",
-        JSON.stringify({
-          ...auth,
+        setAuth((prev) => ({
+          ...prev,
           fullname: values.fullname,
           email: values.email,
           bio: values.bio,
-        })
-      );
+        }));
 
-      setIsModalOpen(false);
+        localStorage.setItem(
+          "auth",
+          JSON.stringify({
+            ...auth,
+            fullname: values.fullname,
+            email: values.email,
+            bio: values.bio,
+          })
+        );
+
+        setIsModalOpen(false);
+      } else {
+        setLoading(false);
+        message.error(res.data.message || "Failed to update information");
+      }
     } catch (error) {
       setLoading(false);
-      console.error("❌ Error when updating your information:", error);
-      message.error("Error when updating your information.");
+      message.error(
+        error.response?.data?.message || "Failed to update information"
+      );
     }
   };
 
@@ -154,35 +168,41 @@ const ProfilePage = () => {
         }
       );
 
-      setVerifyLoading(false);
-      message.success("Verify your account successfully!!");
+      if (res.data.success) {
+        setVerifyLoading(false);
+        message.success("Verify your account successfully!");
 
-      setAuth((prev) => ({
-        ...prev,
-        phone: values.phone,
-        paymentAccount: values.paymentAccount,
-      }));
-
-      localStorage.setItem(
-        "auth",
-        JSON.stringify({
-          ...auth,
+        setAuth((prev) => ({
+          ...prev,
           phone: values.phone,
           paymentAccount: values.paymentAccount,
-        })
-      );
+        }));
 
-      setIsVerifyModalOpen(false);
+        localStorage.setItem(
+          "auth",
+          JSON.stringify({
+            ...auth,
+            phone: values.phone,
+            paymentAccount: values.paymentAccount,
+          })
+        );
+
+        setIsVerifyModalOpen(false);
+      } else {
+        setVerifyLoading(false);
+        message.error(res.data.message || "Failed to verify your account");
+      }
     } catch (error) {
       setVerifyLoading(false);
-      console.error("❌ Error when verify your account:", error);
-      message.error("Error when verify your account.");
+      message.error(
+        error.response?.data?.message || "Failed to verify your account"
+      );
     }
   };
 
   const handleUploadAvatar = async (file) => {
     if (!file) {
-      message.error("Vui lòng chọn một file!");
+      message.error("Please select a file!");
       return;
     }
     const formData = new FormData();
@@ -200,7 +220,7 @@ const ProfilePage = () => {
         }
       );
       setAvatarLoading(false);
-      if (res.data?.["image-url"]) {
+      if (res.data.success && res.data?.["image-url"]) {
         const newAvatarUrl = `${res.data["image-url"]}?t=${Date.now()}`;
         setAuth((prev) => ({
           ...prev,
@@ -215,11 +235,13 @@ const ProfilePage = () => {
         );
         message.success("Update your profile successfully!");
       } else {
-        message.error("Error when update your profile!");
+        message.error(res.data.message || "Failed to update your profile");
       }
     } catch (error) {
       setAvatarLoading(false);
-      message.error("Wrong image format");
+      message.error(
+        error.response?.data?.message || "Failed to update your profile"
+      );
     }
   };
 
@@ -257,7 +279,7 @@ const ProfilePage = () => {
             <Descriptions.Item label="Email">{auth?.email}</Descriptions.Item>
             <Descriptions.Item label="Phone">{auth?.phone}</Descriptions.Item>
             <Descriptions.Item label="Payment Account">
-              {auth?.paymentAccount || "Chưa xác nhận"}
+              {auth?.paymentAccount || "Not verified"}
             </Descriptions.Item>
             <Descriptions.Item label="Verification Status">
               <Tag color={isVerified ? "green" : "red"}>

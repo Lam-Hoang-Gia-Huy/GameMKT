@@ -8,6 +8,7 @@ import {
   Form,
   Input,
   InputNumber,
+  Typography,
 } from "antd";
 import {
   fetchRewardsByProjectId,
@@ -23,6 +24,7 @@ import {
 } from "@ant-design/icons";
 
 const { confirm } = Modal;
+const { Text } = Typography;
 
 const RewardList = ({ projectId, projectStatus }) => {
   const [rewards, setRewards] = useState([]);
@@ -63,9 +65,25 @@ const RewardList = ({ projectId, projectStatus }) => {
     }
   };
 
+  const validateRewardAmount = async (amount, rewardId = null) => {
+    // Check if the amount already exists in other rewards
+    const existingReward = rewards.find(
+      (reward) =>
+        reward.amount === amount &&
+        (!rewardId || reward["reward-id"] !== rewardId) // Exclude the current reward if editing
+    );
+    if (existingReward) {
+      throw new Error(
+        "A reward with this amount already exists for this project."
+      );
+    }
+  };
+
   const showEditModal = (reward) => {
     if (isVisible) {
-      message.warning("Cannot edit rewards for a VISIBLE project");
+      message.warning(
+        "Cannot edit rewards for a VISIBLE project. Please contact staff or admin by creating a report to request changes."
+      );
       return;
     }
     setEditingReward(reward);
@@ -75,7 +93,9 @@ const RewardList = ({ projectId, projectStatus }) => {
 
   const handleAddReward = () => {
     if (isVisible) {
-      message.warning("Cannot add rewards for a VISIBLE project");
+      message.warning(
+        "Cannot add rewards for a VISIBLE project. Please contact staff or admin to request changes."
+      );
       return;
     }
     setEditingReward(null);
@@ -85,7 +105,9 @@ const RewardList = ({ projectId, projectStatus }) => {
 
   const handleDelete = (rewardId) => {
     if (isVisible) {
-      message.warning("Cannot delete rewards for a VISIBLE project");
+      message.warning(
+        "Cannot delete rewards for a VISIBLE project. Please contact staff or admin to request changes."
+      );
       return;
     }
     confirm({
@@ -109,6 +131,12 @@ const RewardList = ({ projectId, projectStatus }) => {
 
   const handleSubmit = async (values) => {
     try {
+      // Validate reward amount for duplicates
+      await validateRewardAmount(
+        values.amount,
+        editingReward ? editingReward["reward-id"] : null
+      );
+
       const rewardData = {
         ...values,
         "project-id": projectId,
@@ -117,7 +145,9 @@ const RewardList = ({ projectId, projectStatus }) => {
 
       if (editingReward) {
         if (isVisible) {
-          message.warning("Cannot edit rewards for a VISIBLE project");
+          message.warning(
+            "Cannot edit rewards for a VISIBLE project. Please contact staff or admin to request changes."
+          );
           return;
         }
         await updateReward(editingReward["reward-id"], rewardData);
@@ -132,7 +162,7 @@ const RewardList = ({ projectId, projectStatus }) => {
       setEditingReward(null);
       loadRewards();
     } catch (error) {
-      message.error("Action failed");
+      message.error(error.message || "Action failed");
     }
   };
 
@@ -182,11 +212,22 @@ const RewardList = ({ projectId, projectStatus }) => {
   return (
     <div>
       <h2>Rewards</h2>
+      {isVisible && (
+        <Text
+          type="danger"
+          style={{ display: "block", marginBottom: 16, fontSize: 15 }}
+        >
+          <b>Note:</b> Rewards cannot be added, edited, or deleted for a VISIBLE
+          project. Please contact staff or admin by creating a report to request
+          changes.
+        </Text>
+      )}
       <Button
         type="primary"
         icon={<PlusOutlined />}
         onClick={handleAddReward}
         disabled={isVisible}
+        style={{ marginBottom: 16 }}
       >
         Add Reward
       </Button>
@@ -207,7 +248,19 @@ const RewardList = ({ projectId, projectStatus }) => {
           <Form.Item
             name="amount"
             label="Amount"
-            rules={[{ required: true, message: "Please enter amount" }]}
+            rules={[
+              { required: true, message: "Please enter amount" },
+              {
+                validator: async (_, value) => {
+                  if (value) {
+                    await validateRewardAmount(
+                      value,
+                      editingReward ? editingReward["reward-id"] : null
+                    );
+                  }
+                },
+              },
+            ]}
           >
             <InputNumber
               min={1}

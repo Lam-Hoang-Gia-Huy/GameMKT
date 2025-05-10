@@ -47,7 +47,7 @@ const CollaboratorManagementPage = () => {
         }
         setLoading(false);
       } catch (error) {
-        message.error("Failed to load projects");
+        message.error(error.response?.data?.messages);
         setLoading(false);
       }
     };
@@ -68,7 +68,9 @@ const CollaboratorManagementPage = () => {
       }
       setLoading(false);
     } catch (error) {
-      message.error("Failed to load collaborators");
+      message.error(
+        error.response?.data?.message || "Failed to load collaborators"
+      );
       setLoading(false);
     }
   };
@@ -92,14 +94,14 @@ const CollaboratorManagementPage = () => {
       if (response.data.success) {
         message.success("Collaborator added successfully");
         form.resetFields(["email", "role"]);
-        form.setFieldsValue({ role: "EDITOR" }); // Reset to default role
+        form.setFieldsValue({ role: "EDITOR" });
         loadCollaborators(projectToUse);
       } else {
-        message.error(response.data.message || "Failed to add collaborator");
+        message.error(response.data.message);
       }
       setLoading(false);
     } catch (error) {
-      message.error("Failed to add collaborator");
+      message.error(error.response?.data?.message);
       setLoading(false);
     }
   };
@@ -113,11 +115,11 @@ const CollaboratorManagementPage = () => {
         message.success("Collaborator removed successfully");
         loadCollaborators(projectId);
       } else {
-        message.error(response.data.message || "Failed to remove collaborator");
+        message.error(response.data.message);
       }
       setLoading(false);
     } catch (error) {
-      message.error("Failed to remove collaborator");
+      message.error(error.response?.data?.message);
       setLoading(false);
     }
   };
@@ -131,13 +133,11 @@ const CollaboratorManagementPage = () => {
         message.success("Collaborator role updated successfully");
         loadCollaborators(projectId);
       } else {
-        message.error(
-          response.data.message || "Failed to update collaborator role"
-        );
+        message.error(response.data.message);
       }
       setLoading(false);
     } catch (error) {
-      message.error("Failed to update collaborator role");
+      message.error(error.response?.data?.message);
       setLoading(false);
     }
   };

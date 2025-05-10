@@ -54,7 +54,6 @@ const FaqManagementPage = () => {
   const [editAnswer, setEditAnswer] = useState("");
   const [loading, setLoading] = useState(false);
   const [addingFaq, setAddingFaq] = useState(false);
-  const [editQuestion, setEditQuestion] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -76,10 +75,13 @@ const FaqManagementPage = () => {
         if (response.data.data.length > 0) {
           setSelectedProjectId(response.data.data[0]["project-id"]);
         }
+      } else {
+        message.error(response.data.message || "Failed to fetch projects");
       }
     } catch (error) {
-      console.error("Error fetching projects:", error);
-      message.error("Failed to fetch projects");
+      message.error(
+        error.response?.data?.message || "Failed to fetch projects"
+      );
     } finally {
       setLoading(false);
     }
@@ -91,10 +93,11 @@ const FaqManagementPage = () => {
       const response = await getFaqsByProjectId(projectId);
       if (response.data.success) {
         setFaqs(response.data.data);
+      } else {
+        message.error(response.data.message || "Failed to fetch FAQs");
       }
     } catch (error) {
-      console.error("Error fetching FAQs:", error);
-      message.error("Failed to fetch FAQs");
+      message.error(error.response?.data?.message || "Failed to fetch FAQs");
     } finally {
       setLoading(false);
     }
@@ -114,31 +117,28 @@ const FaqManagementPage = () => {
       message.success("FAQ added successfully");
       fetchFaqs(selectedProjectId);
     } catch (error) {
-      console.error("Error adding FAQ:", error);
-      message.error("Failed to add FAQ");
+      message.error(error.response?.data?.message || "Failed to add FAQ");
     }
   };
 
   const startEditing = (faq) => {
     setEditingId(faq.question);
-    setEditQuestion(faq.question);
     setEditAnswer(faq.answer);
   };
 
   const handleUpdateFaq = async () => {
-    if (!editAnswer.trim() || !editQuestion.trim()) {
-      message.warning("Both question and answer are required");
+    if (!editAnswer.trim()) {
+      message.warning("Answer is required");
       return;
     }
 
     try {
-      await updateFaq(selectedProjectId, editingId, editQuestion, editAnswer);
+      await updateFaq(selectedProjectId, editingId, editingId, editAnswer);
       setEditingId(null);
       message.success("FAQ updated successfully");
       fetchFaqs(selectedProjectId);
     } catch (error) {
-      console.error("Error updating FAQ:", error);
-      message.error("Failed to update FAQ");
+      message.error(error.response?.data?.message || "Failed to update FAQ");
     }
   };
 
@@ -162,8 +162,7 @@ const FaqManagementPage = () => {
       message.success("FAQ deleted successfully");
       fetchFaqs(selectedProjectId);
     } catch (error) {
-      console.error("Error deleting FAQ:", error);
-      message.error("Failed to delete FAQ");
+      message.error(error.response?.data?.message || "Failed to delete FAQ");
     }
   };
 
@@ -335,11 +334,7 @@ const FaqManagementPage = () => {
                     <div className="edit-answer-section">
                       <div style={{ marginBottom: 12 }}>
                         <Text strong>Question:</Text>
-                        <Input
-                          value={editQuestion}
-                          onChange={(e) => setEditQuestion(e.target.value)}
-                          placeholder="Enter new question"
-                        />
+                        <Input value={faq.question} disabled />
                       </div>
 
                       <TipTapEditor

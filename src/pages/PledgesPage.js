@@ -12,6 +12,7 @@ import {
   Progress,
   Space,
   Button,
+  message,
 } from "antd";
 import {
   CheckCircleOutlined,
@@ -39,52 +40,78 @@ const PledgesPage = () => {
     const loadData = async () => {
       try {
         const res = await fetchPledgesByUserId();
-        const pledgeData = res.data.data || [];
+        if (res.data.success) {
+          const pledgeData = res.data.data || [];
 
-        const pledgesWithProjects = await Promise.all(
-          pledgeData.map(async (pledge) => {
-            try {
-              const projectRes = await fetchProject(pledge["project-id"]);
-              return {
-                ...pledge,
-                project: projectRes.data.data || {
-                  id: pledge["project-id"],
-                  title: "Hidden Project",
-                  description:
-                    "This project is currently invisible or deleted.",
-                  thumbnail: placeholder,
-                  status: "Hidden",
-                  "total-amount": 0,
-                  "minimum-amount": 0,
-                  "end-datetime": null,
-                },
-              };
-            } catch (error) {
-              console.error(
-                `Error fetching project ${pledge["project-id"]}:`,
-                error
-              );
-              return {
-                ...pledge,
-                project: {
-                  id: pledge["project-id"],
-                  title: "Hidden Project",
-                  description:
-                    "This project is currently invisible or deleted.",
-                  thumbnail: null,
-                  status: "Hidden",
-                  "total-amount": 0,
-                  "minimum-amount": 0,
-                  "end-datetime": null,
-                },
-              };
-            }
-          })
-        );
+          const pledgesWithProjects = await Promise.all(
+            pledgeData.map(async (pledge) => {
+              try {
+                const projectRes = await fetchProject(pledge["project-id"]);
+                if (projectRes.data.success) {
+                  return {
+                    ...pledge,
+                    project: projectRes.data.data || {
+                      id: pledge["project-id"],
+                      title: "Hidden Project",
+                      description:
+                        "This project is currently invisible or deleted.",
+                      thumbnail: placeholder,
+                      status: "Hidden",
+                      "total-amount": 0,
+                      "minimum-amount": 0,
+                      "end-datetime": null,
+                    },
+                  };
+                } else {
+                  message.error(
+                    projectRes.data.message || "Failed to fetch project details"
+                  );
+                  return {
+                    ...pledge,
+                    project: {
+                      id: pledge["project-id"],
+                      title: "Hidden Project",
+                      description:
+                        "This project is currently invisible or deleted.",
+                      thumbnail: placeholder,
+                      status: "Hidden",
+                      "total-amount": 0,
+                      "minimum-amount": 0,
+                      "end-datetime": null,
+                    },
+                  };
+                }
+              } catch (error) {
+                message.error(
+                  error.response?.data?.message ||
+                    "Failed to fetch project details"
+                );
+                return {
+                  ...pledge,
+                  project: {
+                    id: pledge["project-id"],
+                    title: "Hidden Project",
+                    description:
+                      "This project is currently invisible or deleted.",
+                    thumbnail: placeholder,
+                    status: "Hidden",
+                    "total-amount": 0,
+                    "minimum-amount": 0,
+                    "end-datetime": null,
+                  },
+                };
+              }
+            })
+          );
 
-        setPledges(pledgesWithProjects);
+          setPledges(pledgesWithProjects);
+        } else {
+          message.error(res.data.message || "Failed to load pledges");
+        }
       } catch (error) {
-        console.error("Error loading pledges:", error);
+        message.error(
+          error.response?.data?.message || "Failed to load pledges"
+        );
       } finally {
         setLoading(false);
       }

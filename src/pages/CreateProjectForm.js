@@ -363,7 +363,7 @@ const CreateProjectForm = () => {
   return (
     <Card
       title="Create New Project"
-      style={{ maxWidth: 800, margin: "auto", padding: 20 }}
+      style={{ maxWidth: 850, margin: "auto", padding: 20 }}
     >
       <Steps current={currentStep} style={{ marginBottom: 24 }}>
         {steps.map((item) => (

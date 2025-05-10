@@ -5,6 +5,7 @@ import {
   updateProject,
   updateThumbnail,
   updateStory,
+  checkProjectPermissions,
 } from "../api/apiClient";
 import {
   Button,
@@ -22,6 +23,7 @@ import {
   Row,
   Col,
   Space,
+  Result,
 } from "antd";
 import { UploadOutlined, SaveOutlined } from "@ant-design/icons";
 import TipTapEditor from "../components/TipTapEditor";
@@ -37,6 +39,7 @@ const UserEditProject = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(true);
+  const [permissionError, setPermissionError] = useState(null);
   const [story, setStory] = useState("");
   const [projectPlatforms, setProjectPlatforms] = useState([]);
   const [projectCategories, setProjectCategories] = useState([]);
@@ -48,10 +51,33 @@ const UserEditProject = () => {
   const [updatingStory, setUpdatingStory] = useState(false);
   const [projectStatus, setProjectStatus] = useState("");
 
+  // Function to check user permissions
+  const checkPermissions = async () => {
+    try {
+      await checkProjectPermissions(projectId);
+      return true;
+    } catch (error) {
+      if (error.response && error.response.status === 403) {
+        setPermissionError(
+          error.response.data.message ||
+            "You do not have permission to edit this project."
+        );
+      } else {
+        setPermissionError(error.response.data.message);
+      }
+      return false;
+    }
+  };
+
   useEffect(() => {
-    const loadProject = async () => {
+    const initializePage = async () => {
+      setLoading(true);
+      const hasPermission = await checkPermissions();
+      if (!hasPermission) {
+        setLoading(false);
+        return;
+      }
       try {
-        setLoading(true);
         const response = await fetchProject(projectId);
         const project = response.data.data;
         form.setFieldsValue({
@@ -75,7 +101,7 @@ const UserEditProject = () => {
       }
     };
 
-    loadProject();
+    initializePage();
   }, [projectId, form]);
 
   const handleUpdateThumbnail = async () => {
@@ -126,11 +152,9 @@ const UserEditProject = () => {
         EndDatetime: values.endDatetime.toISOString(),
       };
 
-      // Only include MinimumAmount in payload if status is not VISIBLE
       if (projectStatus !== "VISIBLE") {
         payload.MinimumAmount = values.minimumAmount;
       } else {
-        // Retain the original minimumAmount from form initial values
         payload.MinimumAmount = form.getFieldValue("minimumAmount");
       }
 
@@ -144,6 +168,22 @@ const UserEditProject = () => {
     }
   };
 
+  if (permissionError) {
+    return (
+      <Result
+        status="403"
+        title="Access Denied"
+        subTitle={permissionError}
+        extra={
+          <Button type="primary" onClick={() => navigate("/my-projects")}>
+            Back to Projects
+          </Button>
+        }
+      />
+    );
+  }
+
+  // Render the edit page if no permission error
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
       <h1 style={{ marginBottom: 24 }}>Edit Project</h1>
@@ -166,7 +206,6 @@ const UserEditProject = () => {
                 >
                   <Input />
                 </Form.Item>
-
                 <Form.Item
                   label="Description"
                   name="description"
@@ -213,7 +252,6 @@ const UserEditProject = () => {
                     }}
                   />
                 </Form.Item>
-
                 <Form.Item
                   label="End Date"
                   name="endDatetime"
@@ -235,7 +273,6 @@ const UserEditProject = () => {
                     }}
                   />
                 </Form.Item>
-
                 <Form.Item>
                   <Button
                     type="primary"
@@ -266,7 +303,6 @@ const UserEditProject = () => {
                     />
                   </div>
                 </Form.Item>
-
                 <Form.Item label="Platforms">
                   <div style={{ marginTop: 8 }}>
                     {projectPlatforms.map((platform) => (
@@ -290,7 +326,6 @@ const UserEditProject = () => {
               </Form>
             </Card>
           </Col>
-
           <Col xs={24} md={12}>
             <Card
               title="Project Thumbnail"
@@ -311,7 +346,6 @@ const UserEditProject = () => {
                   />
                 </div>
               )}
-
               <Space direction="vertical" style={{ width: "100%" }}>
                 <Upload
                   accept="image/*"
@@ -325,7 +359,6 @@ const UserEditProject = () => {
                     Select New Thumbnail
                   </Button>
                 </Upload>
-
                 {thumbnail && (
                   <div
                     style={{
@@ -351,7 +384,6 @@ const UserEditProject = () => {
                 )}
               </Space>
             </Card>
-
             <Card title="Project Story" bordered={false}>
               {storyLoaded && (
                 <TipTapEditor
@@ -373,9 +405,7 @@ const UserEditProject = () => {
             </Card>
           </Col>
         </Row>
-
         <Divider />
-
         <div style={{ textAlign: "right" }}>
           <Button
             type="default"

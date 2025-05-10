@@ -48,8 +48,9 @@ const MyProjectList = () => {
       setProjects(projectsData);
       setFilteredProjects(projectsData);
     } catch (error) {
-      message.error("Failed to fetch projects");
-      console.error(error);
+      message.error(
+        error.response?.data?.message || "Failed to fetch projects"
+      );
     } finally {
       setLoading(false);
     }
@@ -132,8 +133,9 @@ const MyProjectList = () => {
             )
           );
         } catch (error) {
-          message.error("Failed to delete project");
-          console.error(error);
+          message.error(
+            error.response?.data?.message || "Failed to delete project"
+          );
         }
       },
     });
