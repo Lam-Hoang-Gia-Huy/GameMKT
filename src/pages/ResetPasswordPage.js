@@ -46,13 +46,15 @@ const ResetPasswordPage = () => {
   const handleVerifyCode = async (values) => {
     setLoading(true);
     try {
-      await verifyCode(email, values.code);
-      message.success("Code verified successfully!");
-      setCurrentStep(2);
+      const response = await verifyCode(email, values.code);
+      if (response.data?.success) {
+        message.success(response.data?.message);
+        setCurrentStep(2);
+      } else {
+        message.error(response.data?.message);
+      }
     } catch (error) {
-      message.error(
-        error.response?.data?.message || "Invalid or expired code."
-      );
+      message.error(error.response?.data?.message);
     } finally {
       setLoading(false);
     }
@@ -167,11 +169,12 @@ const ResetPasswordPage = () => {
               rules={[
                 { required: true, message: "Please input your new password!" },
                 { min: 8, message: "Password must be at least 8 characters!" },
+                { max: 15, message: "Password must not exceed 15 characters!" },
                 {
                   pattern:
-                    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/,
+                    /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,15}$/,
                   message:
-                    "Password must contain at least one letter, one number, and one special character!",
+                    "Password must be 8-15 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)!",
                 },
               ]}
             >

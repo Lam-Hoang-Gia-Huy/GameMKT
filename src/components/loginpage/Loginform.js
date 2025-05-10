@@ -32,7 +32,12 @@ const Loginform = () => {
       const name = response.data["full-name"];
       const role = response.data?.role;
       const id = response.data?.hint;
-      if (token) {
+
+      // Check if the role is ADMIN
+      if (role === "ADMIN") {
+        setErrorMsg("Login failed. Please try again.");
+        setSuccessMsg("");
+      } else if (token) {
         setAuth({ token, user, name, role, id });
         setSuccessMsg(response.data?.message || "Logged in successfully!");
         setErrorMsg("");
@@ -70,7 +75,7 @@ const Loginform = () => {
                 htmlFor="username"
                 className="block text-sm font-medium text-gray-700"
               >
-                Username
+                Email
               </label>
               <input
                 id="username"
@@ -80,7 +85,7 @@ const Loginform = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full px-3 py-2 mt-1 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter your username"
+                placeholder="Enter your email"
               />
             </div>
 
