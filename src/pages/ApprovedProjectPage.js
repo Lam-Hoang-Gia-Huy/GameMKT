@@ -5,6 +5,7 @@ import {
   refundAllPledges,
   staffApproveProject,
   deleteProject,
+  transferPledgesToCreator,
 } from "../api/apiClient";
 import {
   Table,
@@ -120,20 +121,8 @@ const ApprovedProjects = () => {
   const handleTransfer = async (projectId) => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `/api/PaypalPayment/TransferPledgeToCreator`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${
-              JSON.parse(localStorage.getItem("auth"))?.token
-            }`,
-          },
-          body: JSON.stringify({ projectId }),
-        }
-      );
-      if (response.ok) {
+      const response = await transferPledgesToCreator(projectId);
+      if (response.success) {
         message.success("Pledges transferred successfully");
         fetchProjects();
       } else {

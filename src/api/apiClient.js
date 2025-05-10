@@ -533,3 +533,14 @@ export const deleteUser = (userDeleteId) => {
     },
   });
 };
+export const transferPledgesToCreator = (projectId) => {
+  return apiAuth.post(
+    `/api/PaypalPayment/TransferPledgeToCreator?projectId=${projectId}`,
+    null,
+    {
+      headers: {
+        Accept: "*/*",
+      },
+    }
+  );
+};
