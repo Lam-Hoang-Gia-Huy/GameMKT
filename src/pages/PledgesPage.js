@@ -91,8 +91,10 @@ const PledgesPage = () => {
               } catch (error) {
                 // Kiểm tra lỗi từ phản hồi API
                 if (
-                  error.response?.data?.["status-code"] === 401 &&
-                  error.response?.data?.message === "This project is invisible."
+                  error.response?.data?.message ===
+                    "This project is invisible." ||
+                  error.response?.data?.message ===
+                    "The project associated with the request cannot be found."
                 ) {
                   // Không hiển thị message.error, trả về dự án mặc định
                   return {
