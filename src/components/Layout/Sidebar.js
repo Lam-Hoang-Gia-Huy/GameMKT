@@ -12,6 +12,7 @@ import {
   FlagOutlined,
   TagsOutlined,
   WindowsOutlined,
+  FileExclamationOutlined,
 } from "@ant-design/icons";
 
 const Sidebar = () => {
@@ -31,13 +32,14 @@ const Sidebar = () => {
       },
     ],
     STAFF: [
-      {
-        key: "11",
-        label: "Invisible Projects",
-        path: "/invisible-projects",
-        icon: <EyeInvisibleOutlined />,
-        description: "Review hidden projects",
-      },
+      // {
+      //   key: "11",
+      //   label: "Invisible Projects",
+      //   path: "/invisible-projects",
+      //   icon: <EyeInvisibleOutlined />,
+      //   description: "Review hidden projects",
+      // },
+
       {
         key: "12",
         label: "Project monitor",
@@ -47,13 +49,20 @@ const Sidebar = () => {
       },
       {
         key: "13",
+        label: "Reports",
+        path: "/report-management",
+        icon: <FileExclamationOutlined />,
+        description: "View report list",
+      },
+      {
+        key: "14",
         label: "Category",
         path: "/category",
         icon: <TagsOutlined />,
         description: "Manage website's categories",
       },
       {
-        key: "14",
+        key: "15",
         label: "Platform",
         path: "/platform",
         icon: <WindowsOutlined />,

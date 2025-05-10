@@ -33,6 +33,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import PlatformManagement from "./pages/PlatformManagement";
 import CategoryManagement from "./pages/CategoryManagement";
 import Dashboard from "./pages/Dashboard";
+import Reports from "./pages/ReportManagementPage";
 function App() {
   return (
     <Routes>
@@ -42,7 +43,7 @@ function App() {
           element={
             <RequireAuth
               restrictedRoles={["STAFF"]}
-              redirectTo="invisible-projects"
+              redirectTo="approved-projects"
             />
           }
         >
@@ -62,7 +63,9 @@ function App() {
 
         {/* 🔐 Staff routes */}
         <Route element={<RequireAuth roles={["STAFF"]} />}>
-          <Route path="invisible-projects" element={<InvisibleProjects />} />
+          {/* <Route path="invisible-projects" element={<InvisibleProjects />} /> */}
+          <Route path="report-management" element={<Reports />} />
+
           <Route path="approved-projects" element={<ApprovedProjects />} />
           <Route
             path="staff/project/:id"
@@ -82,9 +85,11 @@ function App() {
           <Route path="edit-project/:projectId" element={<UserEditProject />} />
           <Route path="/pledges" element={<PledgesPage />} />
           <Route path="/my-editor-projects" element={<EditorProjects />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          {/* <Route path="/dashboard" element={<Dashboard />} /> */}
           <Route path="/post-managemnent" element={<PostManagement />} />
           <Route path="/project-backers" element={<ProjectBackersPage />} />
+          <Route path="files" element={<FileManagerPage />} />
+
           <Route
             path="manage-collaborators"
             element={<CollaboratorManagementPage />}
@@ -98,7 +103,6 @@ function App() {
         {/* 🔐 Các role chung */}
         <Route element={<RequireAuth roles={["ADMIN", "STAFF", "CUSTOMER"]} />}>
           <Route path="profile" element={<ProfilePage />} />
-          <Route path="files" element={<FileManagerPage />} />
         </Route>
 
         {/* ✅ Profile không giới hạn quyền */}

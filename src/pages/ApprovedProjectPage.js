@@ -1,27 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchProjectsAdmin, refundAllPledges } from "../api/apiClient"; // Add refundAllPledges import
+import {
+  fetchProjectsAdmin,
+  refundAllPledges,
+  staffApproveProject,
+  deleteProject,
+} from "../api/apiClient";
 import {
   Table,
   Input,
-  Select,
   Typography,
   Tag,
   Button,
   Popconfirm,
   message,
+  Input as AntInput,
 } from "antd";
-import { EyeOutlined } from "@ant-design/icons";
+import { EyeOutlined, DeleteOutlined } from "@ant-design/icons";
 import placeholder from "../assets/placeholder-1-1-1.png";
 
 const { Search } = Input;
-const { Option } = Select;
 const { Title } = Typography;
 
 const ApprovedProjects = () => {
   const [projects, setProjects] = useState([]);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [reason, setReason] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,7 +36,7 @@ const ApprovedProjects = () => {
     try {
       const response = await fetchProjectsAdmin();
       const filteredProjects = response.data.data.filter((p) =>
-        ["VISIBLE", "DELETED"].includes(p.status)
+        ["VISIBLE", "INVISIBLE"].includes(p.status)
       );
       setProjects(filteredProjects || []);
     } catch (error) {
@@ -46,7 +50,7 @@ const ApprovedProjects = () => {
       const response = await refundAllPledges(projectId);
       if (response.data.success) {
         message.success("All pledges refunded successfully");
-        fetchProjects(); // Refresh the project list
+        fetchProjects();
       } else {
         message.error("Failed to refund pledges");
       }
@@ -56,18 +60,75 @@ const ApprovedProjects = () => {
     }
   };
 
+  const handleToggleStatus = async (projectId, currentStatus) => {
+    if (!reason.trim()) {
+      message.error("Please provide a reason for status change");
+      return;
+    }
+    const newStatus = currentStatus === "VISIBLE" ? "INVISIBLE" : "VISIBLE";
+    try {
+      await staffApproveProject({
+        projectId,
+        status: newStatus,
+        reason: reason.trim(),
+      });
+      message.success(`Project status changed to ${newStatus}`);
+      setReason("");
+      fetchProjects();
+    } catch (error) {
+      console.error("Error toggling project status", error);
+      message.error("Error toggling project status");
+    }
+  };
+
+  const handleDelete = async (projectId) => {
+    try {
+      await deleteProject(projectId);
+      message.success("Project deleted successfully");
+      fetchProjects();
+    } catch (error) {
+      console.error("Error deleting project", error);
+      message.error("Error deleting project");
+    }
+  };
+
+  const handleTransfer = async (projectId) => {
+    try {
+      const response = await fetch(
+        `/api/PaypalPayment/TransferPledgeToCreator`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${
+              JSON.parse(localStorage.getItem("auth"))?.token
+            }`,
+          },
+          body: JSON.stringify({ projectId }),
+        }
+      );
+      if (response.ok) {
+        message.success("Pledges transferred successfully");
+        fetchProjects();
+      } else {
+        message.error("Failed to transfer pledges");
+      }
+    } catch (error) {
+      console.error("Error transferring pledges", error);
+      message.error("Error transferring pledges");
+    }
+  };
+
   const getStatusTag = (status) => {
     const statusColors = {
       VISIBLE: "blue",
-      DELTED: "orange",
+      INVISIBLE: "orange",
     };
     return <Tag color={statusColors[status] || "default"}>{status}</Tag>;
   };
 
-  const filteredProjects = projects.filter(
-    (p) =>
-      (!statusFilter || p.status === statusFilter) &&
-      p.title.toLowerCase().includes(search.toLowerCase())
+  const filteredProjects = projects.filter((p) =>
+    p.title.toLowerCase().includes(search.toLowerCase())
   );
 
   const columns = [
@@ -133,6 +194,51 @@ const ApprovedProjects = () => {
               Refund
             </Button>
           </Popconfirm>
+          <Popconfirm
+            title={
+              <div>
+                <p>{`Change status to ${
+                  record.status === "VISIBLE" ? "INVISIBLE" : "VISIBLE"
+                }?`}</p>
+                <AntInput
+                  placeholder="Enter reason for status change"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+            }
+            onConfirm={() =>
+              handleToggleStatus(record["project-id"], record.status)
+            }
+            okText="Yes"
+            cancelText="No"
+            onCancel={() => setReason("")}
+          >
+            <Button type="default" size="small">
+              Toggle Status
+            </Button>
+          </Popconfirm>
+          <Popconfirm
+            title="Are you sure to transfer pledges to creator?"
+            onConfirm={() => handleTransfer(record["project-id"])}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button type="default" size="small">
+              Transfer
+            </Button>
+          </Popconfirm>
+          <Popconfirm
+            title="Are you sure to delete this project?"
+            onConfirm={() => handleDelete(record["project-id"])}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button type="default" danger size="small">
+              <DeleteOutlined />
+            </Button>
+          </Popconfirm>
         </div>
       ),
     },
@@ -143,7 +249,7 @@ const ApprovedProjects = () => {
       <Title level={3} className="mb-4 text-gray-700">
         Approved Projects
       </Title>
-      <div className="flex gap-4 mb-4 items-center">
+      <div className="mb-4">
         <Search
           placeholder="Search project..."
           value={search}
@@ -151,15 +257,6 @@ const ApprovedProjects = () => {
           enterButton
           className="w-1/2"
         />
-        <Select
-          value={statusFilter}
-          onChange={setStatusFilter}
-          className="w-48 border-gray-300 rounded-md"
-        >
-          <Option value="">All</Option>
-          <Option value="VISIBLE">VISIBLE</Option>
-          <Option value="DELETED">HALTED</Option>
-        </Select>
       </div>
       <Table
         columns={columns}

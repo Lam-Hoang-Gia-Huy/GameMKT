@@ -352,7 +352,7 @@ export const addCommentToPost = (postId, content, parentCommentId = "") => {
   });
 };
 export const fetchCommentsByPostId = (postId) =>
-  apiAuth.get(`/api/Comment/GetComment?postId=${postId}`);
+  apiBase.get(`/api/Comment/GetComment?postId=${postId}`);
 
 export const fetchReportsByUserId = () => {
   return apiAuth.get("/api/Report/GetReportByUserId");
@@ -503,3 +503,18 @@ export const refundAllPledges = (projectId) =>
       },
     }
   );
+export const fetchAllReports = () => {
+  return apiAuth.get("/api/Report/GetAllReport", {
+    headers: {
+      Accept: "*/*",
+    },
+  });
+};
+
+export const fetchReportById = (reportId) => {
+  return apiAuth.get(`/api/Report/GetReportById?reportId=${reportId}`, {
+    headers: {
+      Accept: "*/*",
+    },
+  });
+};
