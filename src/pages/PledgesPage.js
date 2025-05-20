@@ -93,8 +93,7 @@ const PledgesPage = () => {
                 if (
                   error.response?.data?.message ===
                     "This project is invisible." ||
-                  error.response?.data?.message ===
-                    "The project associated with the request cannot be found."
+                  error.response?.data?.message === "This project is deleted."
                 ) {
                   // Không hiển thị message.error, trả về dự án mặc định
                   return {

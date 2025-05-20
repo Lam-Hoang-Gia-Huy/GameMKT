@@ -186,8 +186,8 @@ const UserEditProject = () => {
           setUpdatingBasic(false);
           return;
         }
-        payload.StartDatetime = values.startDatetime.toISOString();
-        payload.EndDatetime = values.endDatetime.toISOString();
+        payload.StartDatetime = values.startDatetime;
+        payload.EndDatetime = values.endDatetime;
         payload.MinimumAmount = parseFloat(values.minimumAmount);
       }
 

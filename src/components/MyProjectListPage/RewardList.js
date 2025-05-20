@@ -152,7 +152,7 @@ const RewardList = ({ projectId, projectStatus }) => {
       const rewardData = {
         ...values,
         "project-id": projectId,
-        "created-datetime": new Date().toISOString(),
+        "created-datetime": new Date(),
       };
 
       if (editingReward) {

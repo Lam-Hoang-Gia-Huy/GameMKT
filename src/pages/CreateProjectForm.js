@@ -71,8 +71,8 @@ const CreateProjectForm = () => {
           Title: values.title,
           Description: values.description,
           MinimumAmount: parseFloat(values.minimumAmount).toString(),
-          StartDatetime: values.startDatetime.toISOString(),
-          EndDatetime: values.endDatetime.toISOString(),
+          StartDatetime: values.startDatetime,
+          EndDatetime: values.endDatetime,
         };
 
         setLoading(true);

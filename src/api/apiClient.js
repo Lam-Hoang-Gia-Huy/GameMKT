@@ -56,13 +56,13 @@ export const fetchProjects = (filters = {}, pageNumber = 1, pageSize = 6) => {
   Object.keys(filters).forEach((key) => {
     if (filters[key] !== undefined && filters[key] !== null) {
       if (key.includes("Datetime") && filters[key]?.isValid?.()) {
-        queryParams[key] = filters[key].toISOString();
+        queryParams[key] = filters[key];
       } else if (
         Array.isArray(filters[key]) &&
         filters[key].every((item) => item?.isValid?.())
       ) {
-        queryParams[`Min${key}`] = filters[key][0].toISOString();
-        queryParams[`Max${key}`] = filters[key][1].toISOString();
+        queryParams[`Min${key}`] = filters[key][0];
+        queryParams[`Max${key}`] = filters[key][1];
       } else if (key === "CategoryIds" || key === "PlatformIds") {
         queryParams[key] = filters[key];
       } else {
