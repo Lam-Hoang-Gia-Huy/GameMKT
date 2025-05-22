@@ -51,6 +51,14 @@ const UserEditProject = () => {
   const [updatingThumbnail, setUpdatingThumbnail] = useState(false);
   const [updatingStory, setUpdatingStory] = useState(false);
   const [projectStatus, setProjectStatus] = useState("");
+  // Trạng thái để theo dõi field nào được bật
+  const [enabledFields, setEnabledFields] = useState({
+    title: false,
+    description: false,
+    minimumAmount: false,
+    startDatetime: false,
+    endDatetime: false,
+  });
 
   // Function to check user permissions
   const checkPermissions = async () => {
@@ -92,13 +100,20 @@ const UserEditProject = () => {
         setProjectCategories(project.categories || []);
         setStory(project.story || "");
         setStoryLoaded(true);
-        // Chỉ set currentThumbnail nếu thumbnail không phải là "unknown" hoặc giá trị không hợp lệ
         setCurrentThumbnail(
           project.thumbnail && project.thumbnail !== "unknown"
             ? project.thumbnail
             : null
         );
         setProjectStatus(project.status || "");
+        // Khởi tạo trạng thái disable dựa trên projectStatus
+        setEnabledFields({
+          title: false,
+          description: false,
+          minimumAmount: false,
+          startDatetime: false,
+          endDatetime: false,
+        });
       } catch (error) {
         message.error(
           error.response?.data?.message || "Failed to fetch project details"
@@ -162,23 +177,49 @@ const UserEditProject = () => {
 
   const handleUpdateBasicInfo = async (values) => {
     try {
-      await form.validateFields(["title", "description"]);
+      // Kiểm tra validation cho các field đã bật
+      const fieldsToValidate = Object.keys(enabledFields).filter(
+        (field) => enabledFields[field]
+      );
+      await form.validateFields(fieldsToValidate);
+
       setUpdatingBasic(true);
-      const payload = {
-        Description: values.description,
-        Name: values.title,
-      };
+      const payload = {};
+
+      // Chỉ thêm các field đã được bật vào payload
+      if (enabledFields.title && values.title) {
+        payload.Title = values.title;
+      }
+      if (enabledFields.description && values.description) {
+        payload.Description = values.description;
+      }
 
       if (projectStatus !== "VISIBLE") {
-        await form.validateFields([
-          "minimumAmount",
-          "startDatetime",
-          "endDatetime",
-        ]);
+        if (enabledFields.minimumAmount && values.minimumAmount) {
+          payload.MinimumAmount = parseFloat(values.minimumAmount);
+        }
+        if (enabledFields.startDatetime && values.startDatetime) {
+          payload.StartDatetime = values.startDatetime;
+        }
+        if (enabledFields.endDatetime && values.endDatetime) {
+          payload.EndDatetime = values.endDatetime;
+        }
+
+        // Kiểm tra nếu không có field nào được bật
+        if (Object.keys(payload).length === 0) {
+          message.warning("Please enable and edit at least one field.");
+          setUpdatingBasic(false);
+          return;
+        }
+
+        // Kiểm tra các field bắt buộc cho INVISIBLE project
         if (
-          !values.startDatetime ||
-          !values.endDatetime ||
-          !values.minimumAmount
+          (enabledFields.minimumAmount ||
+            enabledFields.startDatetime ||
+            enabledFields.endDatetime) &&
+          (!payload.MinimumAmount ||
+            !payload.StartDatetime ||
+            !payload.EndDatetime)
         ) {
           message.error(
             "Please fill in all required fields: Minimum Amount, Start Date, and End Date."
@@ -186,13 +227,25 @@ const UserEditProject = () => {
           setUpdatingBasic(false);
           return;
         }
-        payload.StartDatetime = values.startDatetime;
-        payload.EndDatetime = values.endDatetime;
-        payload.MinimumAmount = parseFloat(values.minimumAmount);
+      } else {
+        // Đối với project VISIBLE, chỉ cần kiểm tra title và description nếu được bật
+        if (
+          (enabledFields.title && !payload.Title) ||
+          (enabledFields.description && !payload.Description)
+        ) {
+          message.error("Please fill in all enabled fields.");
+          setUpdatingBasic(false);
+          return;
+        }
       }
 
-      await updateProject(projectId, payload);
-      message.success("Project information updated successfully");
+      // Gửi API chỉ với các field trong payload
+      if (Object.keys(payload).length > 0) {
+        await updateProject(projectId, payload);
+        message.success("Project information updated successfully");
+      } else {
+        message.warning("No fields were updated.");
+      }
     } catch (error) {
       if (error.errorFields) {
         message.error("Please correct the errors in the form.");
@@ -211,6 +264,14 @@ const UserEditProject = () => {
     } finally {
       setUpdatingBasic(false);
     }
+  };
+
+  // Hàm để bật/tắt trạng thái disable của field
+  const toggleField = (field) => {
+    setEnabledFields((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
   };
 
   if (permissionError) {
@@ -242,32 +303,80 @@ const UserEditProject = () => {
                 initialValues={{}}
               >
                 <Form.Item
-                  label="Title"
+                  label={
+                    <Space>
+                      Title
+                      <Button
+                        size="small"
+                        onClick={() => toggleField("title")}
+                        disabled={projectStatus === "INVISIBLE"}
+                      >
+                        {enabledFields.title ? "Lock" : "Edit"}
+                      </Button>
+                    </Space>
+                  }
                   name="title"
                   rules={[
-                    { required: true, message: "Please input project title!" },
+                    {
+                      required: enabledFields.title,
+                      message: "Please input project title!",
+                    },
                   ]}
                 >
-                  <Input />
+                  <Input
+                    disabled={
+                      projectStatus === "INVISIBLE" || !enabledFields.title
+                    }
+                  />
                 </Form.Item>
                 <Form.Item
-                  label="Description"
+                  label={
+                    <Space>
+                      Description
+                      <Button
+                        size="small"
+                        onClick={() => toggleField("description")}
+                        disabled={projectStatus === "INVISIBLE"}
+                      >
+                        {enabledFields.description ? "Lock" : "Edit"}
+                      </Button>
+                    </Space>
+                  }
                   name="description"
                   rules={[
                     {
-                      required: true,
+                      required: enabledFields.description,
                       message: "Please input project description!",
                     },
                   ]}
                 >
-                  <TextArea rows={4} />
+                  <TextArea
+                    rows={4}
+                    disabled={
+                      projectStatus === "INVISIBLE" ||
+                      !enabledFields.description
+                    }
+                  />
                 </Form.Item>
                 <Form.Item
-                  label="Minimum Amount"
+                  label={
+                    <Space>
+                      Minimum Amount
+                      <Button
+                        size="small"
+                        onClick={() => toggleField("minimumAmount")}
+                        disabled={projectStatus === "VISIBLE"}
+                      >
+                        {enabledFields.minimumAmount ? "Lock" : "Edit"}
+                      </Button>
+                    </Space>
+                  }
                   name="minimumAmount"
                   rules={[
                     {
-                      required: projectStatus !== "VISIBLE",
+                      required:
+                        projectStatus !== "VISIBLE" &&
+                        enabledFields.minimumAmount,
                       message: "Please input minimum amount!",
                     },
                     {
@@ -279,15 +388,31 @@ const UserEditProject = () => {
                   <Input
                     type="number"
                     prefix="$"
-                    disabled={projectStatus === "VISIBLE"}
+                    disabled={
+                      projectStatus === "VISIBLE" ||
+                      !enabledFields.minimumAmount
+                    }
                   />
                 </Form.Item>
                 <Form.Item
-                  label="Start Date"
+                  label={
+                    <Space>
+                      Start Date
+                      <Button
+                        size="small"
+                        onClick={() => toggleField("startDatetime")}
+                        disabled={projectStatus === "VISIBLE"}
+                      >
+                        {enabledFields.startDatetime ? "Lock" : "Edit"}
+                      </Button>
+                    </Space>
+                  }
                   name="startDatetime"
                   rules={[
                     {
-                      required: projectStatus !== "VISIBLE",
+                      required:
+                        projectStatus !== "VISIBLE" &&
+                        enabledFields.startDatetime,
                       message: "Please select start date!",
                     },
                   ]}
@@ -296,18 +421,34 @@ const UserEditProject = () => {
                     showTime
                     format="YYYY-MM-DD HH:mm:ss"
                     style={{ width: "100%" }}
-                    disabled={projectStatus === "VISIBLE"}
+                    disabled={
+                      projectStatus === "VISIBLE" ||
+                      !enabledFields.startDatetime
+                    }
                     disabledDate={(current) =>
                       current && current < moment().startOf("day")
                     }
                   />
                 </Form.Item>
                 <Form.Item
-                  label="End Date"
+                  label={
+                    <Space>
+                      End Date
+                      <Button
+                        size="small"
+                        onClick={() => toggleField("endDatetime")}
+                        disabled={projectStatus === "VISIBLE"}
+                      >
+                        {enabledFields.endDatetime ? "Lock" : "Edit"}
+                      </Button>
+                    </Space>
+                  }
                   name="endDatetime"
                   rules={[
                     {
-                      required: projectStatus !== "VISIBLE",
+                      required:
+                        projectStatus !== "VISIBLE" &&
+                        enabledFields.endDatetime,
                       message: "Please select end date!",
                     },
                   ]}
@@ -317,7 +458,9 @@ const UserEditProject = () => {
                     showTime
                     format="YYYY-MM-DD HH:mm:ss"
                     style={{ width: "100%" }}
-                    disabled={projectStatus === "VISIBLE"}
+                    disabled={
+                      projectStatus === "VISIBLE" || !enabledFields.endDatetime
+                    }
                     disabledDate={(current) => {
                       const startDate = form.getFieldValue("startDatetime");
                       return startDate

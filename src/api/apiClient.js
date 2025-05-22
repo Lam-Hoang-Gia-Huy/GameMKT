@@ -101,7 +101,7 @@ export const getComment = (data) => apiBase.get("/api/Comment", data);
 export const updateProject = (id, data) => {
   const formData = new FormData();
 
-  if (data.Name) formData.append("Name", data.Name);
+  if (data.Name) formData.append("Title", data.Name);
   if (data.Description) formData.append("Description", data.Description);
   if (data.MinimumAmount != null)
     formData.append("MinimumAmount", data.MinimumAmount.toString());
