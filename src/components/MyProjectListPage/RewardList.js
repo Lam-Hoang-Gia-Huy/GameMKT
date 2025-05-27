@@ -32,7 +32,8 @@ const RewardList = ({ projectId, projectStatus }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingReward, setEditingReward] = useState(null);
   const [form] = Form.useForm();
-  const isVisible = projectStatus === "VISIBLE";
+  // Only allow reward modifications for CREATED and REJECTED statuses
+  const isVisible = !["CREATED", "REJECTED"].includes(projectStatus);
 
   useEffect(() => {
     loadRewards();
@@ -88,7 +89,7 @@ const RewardList = ({ projectId, projectStatus }) => {
   const showEditModal = (reward) => {
     if (isVisible) {
       message.warning(
-        "Cannot edit rewards for a VISIBLE project. Please contact staff or admin by creating a report to request changes."
+        "Cannot edit rewards for this project status. Please contact staff or admin by creating a report to request changes."
       );
       return;
     }
@@ -100,7 +101,7 @@ const RewardList = ({ projectId, projectStatus }) => {
   const handleAddReward = () => {
     if (isVisible) {
       message.warning(
-        "Cannot add rewards for a VISIBLE project. Please contact staff or admin to request changes."
+        "Cannot add rewards for this project status. Please contact staff or admin to request changes."
       );
       return;
     }
@@ -112,7 +113,7 @@ const RewardList = ({ projectId, projectStatus }) => {
   const handleDelete = (rewardId) => {
     if (isVisible) {
       message.warning(
-        "Cannot delete rewards for a VISIBLE project. Please contact staff or admin to request changes."
+        "Cannot delete rewards for this project status. Please contact staff or admin to request changes."
       );
       return;
     }
@@ -158,7 +159,7 @@ const RewardList = ({ projectId, projectStatus }) => {
       if (editingReward) {
         if (isVisible) {
           message.warning(
-            "Cannot edit rewards for a VISIBLE project. Please contact staff or admin to request changes."
+            "Cannot edit rewards for this project status. Please contact staff or admin to request changes."
           );
           return;
         }
@@ -240,9 +241,9 @@ const RewardList = ({ projectId, projectStatus }) => {
           type="danger"
           style={{ display: "block", marginBottom: 16, fontSize: 15 }}
         >
-          <b>Note:</b> Rewards cannot be added, edited, or deleted for a VISIBLE
-          project. Please contact staff or admin by creating a report to request
-          changes.
+          <b>Note:</b> Rewards cannot be added, edited, or deleted for this
+          project status. Please contact staff or admin by creating a report to
+          request changes.
         </Text>
       )}
       <Button

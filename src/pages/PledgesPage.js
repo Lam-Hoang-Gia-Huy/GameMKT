@@ -24,7 +24,6 @@ import {
   EyeInvisibleOutlined,
 } from "@ant-design/icons";
 import placeholder from "../assets/placeholder-1-1-1.png";
-
 import { fetchPledgesByUserId, fetchProject } from "../api/apiClient";
 import dayjs from "dayjs";
 
@@ -48,25 +47,29 @@ const PledgesPage = () => {
               try {
                 const projectRes = await fetchProject(pledge["project-id"]);
                 if (projectRes.data.success) {
+                  const projectData = projectRes.data.data || {
+                    id: pledge["project-id"],
+                    title: "Hidden Project",
+                    description:
+                      "This project is currently private or deleted.",
+                    thumbnail: placeholder,
+                    status: "Hidden",
+                    "total-amount": 0,
+                    "minimum-amount": 0,
+                    "end-datetime": null,
+                  };
+                  // Kiểm tra và xử lý thumbnail là "unknown"
+                  if (projectData.thumbnail === "unknown") {
+                    projectData.thumbnail = placeholder;
+                  }
                   return {
                     ...pledge,
-                    project: projectRes.data.data || {
-                      id: pledge["project-id"],
-                      title: "Hidden Project",
-                      description:
-                        "This project is currently invisible or deleted.",
-                      thumbnail: placeholder,
-                      status: "Hidden",
-                      "total-amount": 0,
-                      "minimum-amount": 0,
-                      "end-datetime": null,
-                    },
+                    project: projectData,
                   };
                 } else {
-                  // Nếu API trả về lỗi không phải 401 hoặc message không phải "This project is invisible."
                   if (
-                    projectRes.data["status-code"] !== 401 ||
-                    projectRes.data.message !== "This project is invisible."
+                    projectRes.data["status-code"] !== 403 ||
+                    projectRes.data.message !== "This project is private."
                   ) {
                     message.error(
                       projectRes.data.message ||
@@ -79,7 +82,7 @@ const PledgesPage = () => {
                       id: pledge["project-id"],
                       title: "Hidden Project",
                       description:
-                        "This project is currently invisible or deleted.",
+                        "This project is currently private or deleted.",
                       thumbnail: placeholder,
                       status: "Hidden",
                       "total-amount": 0,
@@ -89,20 +92,18 @@ const PledgesPage = () => {
                   };
                 }
               } catch (error) {
-                // Kiểm tra lỗi từ phản hồi API
                 if (
                   error.response?.data?.message ===
-                    "This project is invisible." ||
+                    "This project is private." ||
                   error.response?.data?.message === "This project is deleted."
                 ) {
-                  // Không hiển thị message.error, trả về dự án mặc định
                   return {
                     ...pledge,
                     project: {
                       id: pledge["project-id"],
                       title: "Hidden Project",
                       description:
-                        "This project is currently invisible or deleted.",
+                        "This project is currently private or deleted.",
                       thumbnail: placeholder,
                       status: "Hidden",
                       "total-amount": 0,
@@ -111,7 +112,6 @@ const PledgesPage = () => {
                     },
                   };
                 }
-                // Các lỗi khác thì hiển thị thông báo
                 message.error(
                   error.response?.data?.message ||
                     "Failed to fetch project details"
@@ -122,7 +122,7 @@ const PledgesPage = () => {
                     id: pledge["project-id"],
                     title: "Hidden Project",
                     description:
-                      "This project is currently invisible or deleted.",
+                      "This project is currently private or deleted.",
                     thumbnail: placeholder,
                     status: "Hidden",
                     "total-amount": 0,
@@ -152,24 +152,50 @@ const PledgesPage = () => {
 
   const getStatusTag = (status) => {
     switch (status) {
-      case "VISIBLE":
+      case "APPROVED":
+      case "ONGOING":
         return (
           <Tag icon={<ClockCircleOutlined />} color="blue">
-            VISIBLE
+            {status}
+          </Tag>
+        );
+      case "SUCCESSFUL":
+        return (
+          <Tag icon={<CheckCircleOutlined />} color="green">
+            SUCCESSFUL
+          </Tag>
+        );
+      case "TRANSFERRED":
+        return (
+          <Tag icon={<DollarOutlined />} color="cyan">
+            TRANSFERRED
+          </Tag>
+        );
+      case "INSUFFICIENT":
+      case "REFUNDED":
+        return (
+          <Tag icon={<InfoCircleOutlined />} color="orange">
+            {status}
+          </Tag>
+        );
+      case "CREATED":
+      case "REJECTED":
+      case "SUBMITTED":
+        return (
+          <Tag icon={<EyeInvisibleOutlined />} color="default">
+            {status}
+          </Tag>
+        );
+      case "DELETED":
+        return (
+          <Tag icon={<DeleteOutlined />} color="red">
+            DELETED
           </Tag>
         );
       case "Hidden":
         return (
-          <Tag icon={<EyeInvisibleOutlined />} color="green">
-            Hidden
-          </Tag>
-        );
-      case "HALTED":
-        return <Tag color="red">HALTED</Tag>;
-      case "DELETED":
-        return (
-          <Tag icon={<DeleteOutlined />} color="red">
-            Deleted
+          <Tag icon={<EyeInvisibleOutlined />} color="default">
+            HIDDEN
           </Tag>
         );
       default:
@@ -289,8 +315,9 @@ const PledgesPage = () => {
                     <Image
                       alt={project.title}
                       src={
-                        project.thumbnail ||
-                        "https://via.placeholder.com/300x180?text=Hidden+Project"
+                        project.thumbnail !== "unknown"
+                          ? project.thumbnail
+                          : placeholder
                       }
                       style={{
                         width: "100%",

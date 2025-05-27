@@ -23,6 +23,22 @@ apiAuth.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
+export const submitProject = (projectId, note) => {
+  return apiAuth.put(
+    `/api/Project/Submit?projectId=${projectId}&note=${encodeURIComponent(
+      note
+    )}`,
+    null,
+    {
+      headers: {
+        Accept: "*/*",
+      },
+    }
+  );
+};
+
+// ... (all other existing functions remain unchanged)
 export const createPaypalPayment = (projectId, amount) => {
   return apiAuth.post(
     `/api/PaypalPayment/create?projectId=${projectId}&amount=${amount}`

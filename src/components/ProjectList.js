@@ -81,7 +81,6 @@ const ProjectList = () => {
         setLoading(true);
 
         const defaultFilters = {
-          ProjectStatus: "VISIBLE",
           ...filters,
         };
 

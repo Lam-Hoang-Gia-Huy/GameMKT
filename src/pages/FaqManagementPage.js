@@ -38,6 +38,9 @@ import {
   ClockCircleOutlined,
   DollarOutlined,
   QuestionCircleOutlined,
+  CheckCircleOutlined,
+  InfoCircleOutlined,
+  EyeInvisibleOutlined,
 } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
@@ -172,14 +175,54 @@ const FaqManagementPage = () => {
 
   const getStatusTag = (status) => {
     switch (status) {
-      case "INVISIBLE":
-        return <Tag color="default">Invisible</Tag>;
+      case "APPROVED":
+      case "ONGOING":
+        return (
+          <Tag icon={<ClockCircleOutlined />} color="blue">
+            {status}
+          </Tag>
+        );
+      case "SUCCESSFUL":
+        return (
+          <Tag icon={<CheckCircleOutlined />} color="green">
+            SUCCESSFUL
+          </Tag>
+        );
+      case "TRANSFERRED":
+        return (
+          <Tag icon={<DollarOutlined />} color="cyan">
+            TRANSFERRED
+          </Tag>
+        );
+      case "INSUFFICIENT":
+      case "REFUNDED":
+        return (
+          <Tag icon={<InfoCircleOutlined />} color="orange">
+            {status}
+          </Tag>
+        );
+      case "CREATED":
+      case "REJECTED":
+      case "SUBMITTED":
+        return (
+          <Tag icon={<EyeInvisibleOutlined />} color="default">
+            {status}
+          </Tag>
+        );
+      case "DELETED":
+        return (
+          <Tag icon={<DeleteOutlined />} color="red">
+            DELETED
+          </Tag>
+        );
       case "HALTED":
-        return <Tag color="red">Halted</Tag>;
-      case "VISIBLE":
-        return <Tag color="blue">On going</Tag>;
+        return (
+          <Tag icon={<InfoCircleOutlined />} color="orange">
+            HALTED
+          </Tag>
+        );
       default:
-        return <Tag>{status}</Tag>;
+        return <Tag color="gray">{status}</Tag>;
     }
   };
 

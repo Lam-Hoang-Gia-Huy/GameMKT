@@ -6,6 +6,7 @@ import {
   updateThumbnail,
   updateStory,
   checkProjectPermissions,
+  submitProject,
 } from "../api/apiClient";
 import {
   Button,
@@ -25,11 +26,13 @@ import {
   Space,
   Typography,
   Result,
+  Modal,
 } from "antd";
 import {
   UploadOutlined,
   SaveOutlined,
   ProjectOutlined,
+  SendOutlined,
 } from "@ant-design/icons";
 import TipTapEditor from "../components/TipTapEditor";
 import CategorySelector from "../components/MyProjectListPage/CategorySelector";
@@ -45,6 +48,7 @@ const UserEditProject = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [form] = Form.useForm();
+  const [submitForm] = Form.useForm();
   const [loading, setLoading] = useState(true);
   const [permissionError, setPermissionError] = useState(null);
   const [story, setStory] = useState("");
@@ -57,7 +61,6 @@ const UserEditProject = () => {
   const [updatingThumbnail, setUpdatingThumbnail] = useState(false);
   const [updatingStory, setUpdatingStory] = useState(false);
   const [projectStatus, setProjectStatus] = useState("");
-  // Trạng thái để theo dõi field nào được bật
   const [enabledFields, setEnabledFields] = useState({
     title: false,
     description: false,
@@ -65,8 +68,8 @@ const UserEditProject = () => {
     startDatetime: false,
     endDatetime: false,
   });
+  const [isSubmitModalVisible, setIsSubmitModalVisible] = useState(false);
 
-  // Function to check user permissions
   const checkPermissions = async () => {
     try {
       await checkProjectPermissions(projectId);
@@ -112,7 +115,6 @@ const UserEditProject = () => {
             : null
         );
         setProjectStatus(project.status || "");
-        // Khởi tạo trạng thái disable
         setEnabledFields({
           title: false,
           description: false,
@@ -186,9 +188,9 @@ const UserEditProject = () => {
       setUpdatingBasic(true);
       const payload = {};
 
-      // Xử lý các field đã bật
-      if (projectStatus === "VISIBLE") {
-        // Đối với project VISIBLE, chỉ xử lý title và description
+      const isVisible = !["CREATED", "REJECTED"].includes(projectStatus);
+
+      if (isVisible) {
         const fieldsToValidate = [];
         if (enabledFields.title) {
           fieldsToValidate.push("title");
@@ -198,10 +200,8 @@ const UserEditProject = () => {
           fieldsToValidate.push("description");
           payload.Description = values.description;
         }
-        // Validate chỉ các field đã bật
         await form.validateFields(fieldsToValidate);
       } else {
-        // Đối với project INVISIBLE, xử lý tất cả các field đã bật
         const fieldsToValidate = Object.keys(enabledFields).filter(
           (field) => enabledFields[field]
         );
@@ -221,9 +221,7 @@ const UserEditProject = () => {
           );
       }
 
-      // Gọi API và lấy response
       const response = await updateProject(projectId, payload);
-      // Hiển thị message từ API response
       message.success(
         response.data.message || "Project information updated successfully"
       );
@@ -247,7 +245,25 @@ const UserEditProject = () => {
     }
   };
 
-  // Hàm để bật/tắt trạng thái disable của field
+  const handleSubmit = () => {
+    setIsSubmitModalVisible(true);
+  };
+
+  const handleSubmitConfirm = async (values) => {
+    try {
+      await submitProject(projectId, values.note);
+      message.success("Project submitted successfully");
+      setIsSubmitModalVisible(false);
+      submitForm.resetFields();
+      const response = await fetchProject(projectId);
+      setProjectStatus(response.data.data.status || "");
+    } catch (error) {
+      message.error(
+        error.response?.data?.message || "Failed to submit project"
+      );
+    }
+  };
+
   const toggleField = (field) => {
     setEnabledFields((prev) => ({
       ...prev,
@@ -270,13 +286,15 @@ const UserEditProject = () => {
     );
   }
 
+  const isVisible = !["CREATED", "REJECTED"].includes(projectStatus);
+
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
       <Title level={2} style={{ marginBottom: 0 }}>
         <ProjectOutlined /> Edit project
       </Title>
       <Text type="secondary">Edit my own projects</Text>
-      <Divider />{" "}
+      <Divider />
       <Spin spinning={loading}>
         <Row gutter={[24, 24]}>
           <Col xs={24} md={12}>
@@ -335,7 +353,7 @@ const UserEditProject = () => {
                       <Button
                         size="small"
                         onClick={() => toggleField("minimumAmount")}
-                        disabled={projectStatus === "VISIBLE"}
+                        disabled={isVisible}
                       >
                         {enabledFields.minimumAmount ? "Lock" : "Edit"}
                       </Button>
@@ -356,10 +374,7 @@ const UserEditProject = () => {
                   <Input
                     type="number"
                     prefix="$"
-                    disabled={
-                      projectStatus === "VISIBLE" ||
-                      !enabledFields.minimumAmount
-                    }
+                    disabled={isVisible || !enabledFields.minimumAmount}
                   />
                 </Form.Item>
                 <Form.Item
@@ -369,7 +384,7 @@ const UserEditProject = () => {
                       <Button
                         size="small"
                         onClick={() => toggleField("startDatetime")}
-                        disabled={projectStatus === "VISIBLE"}
+                        disabled={isVisible}
                       >
                         {enabledFields.startDatetime ? "Lock" : "Edit"}
                       </Button>
@@ -387,10 +402,7 @@ const UserEditProject = () => {
                     showTime
                     format="YYYY-MM-DD HH:mm:ss"
                     style={{ width: "100%" }}
-                    disabled={
-                      projectStatus === "VISIBLE" ||
-                      !enabledFields.startDatetime
-                    }
+                    disabled={isVisible || !enabledFields.startDatetime}
                     disabledDate={(current) =>
                       current && current < moment().startOf("day")
                     }
@@ -403,7 +415,7 @@ const UserEditProject = () => {
                       <Button
                         size="small"
                         onClick={() => toggleField("endDatetime")}
-                        disabled={projectStatus === "VISIBLE"}
+                        disabled={isVisible}
                       >
                         {enabledFields.endDatetime ? "Lock" : "Edit"}
                       </Button>
@@ -422,9 +434,7 @@ const UserEditProject = () => {
                     showTime
                     format="YYYY-MM-DD HH:mm:ss"
                     style={{ width: "100%" }}
-                    disabled={
-                      projectStatus === "VISIBLE" || !enabledFields.endDatetime
-                    }
+                    disabled={isVisible || !enabledFields.endDatetime}
                     disabledDate={(current) => {
                       const startDate = form.getFieldValue("startDatetime");
                       return startDate
@@ -572,6 +582,16 @@ const UserEditProject = () => {
           >
             Back to Projects
           </Button>
+          {projectStatus === "CREATED" && (
+            <Button
+              type="default"
+              icon={<SendOutlined />}
+              onClick={handleSubmit}
+              style={{ marginRight: 8 }}
+            >
+              Submit Project
+            </Button>
+          )}
           <Button
             type="primary"
             onClick={() => {
@@ -585,6 +605,34 @@ const UserEditProject = () => {
           </Button>
         </div>
       </Spin>
+      <Modal
+        title="Submit Project"
+        visible={isSubmitModalVisible}
+        onCancel={() => {
+          setIsSubmitModalVisible(false);
+          submitForm.resetFields();
+        }}
+        footer={null}
+      >
+        <Form
+          form={submitForm}
+          onFinish={handleSubmitConfirm}
+          layout="vertical"
+        >
+          <Form.Item
+            name="note"
+            label="Note"
+            rules={[{ required: true, message: "Please input a note!" }]}
+          >
+            <Input placeholder="Enter a note for submission" />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Confirm Submit
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

@@ -23,6 +23,11 @@ import {
   ExclamationCircleOutlined,
   UserOutlined,
   SearchOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  InfoCircleOutlined,
+  DeleteOutlined,
+  EyeInvisibleOutlined,
 } from "@ant-design/icons";
 import { fetchUserProjects, exportPledgesToExcel } from "../api/apiClient";
 import axios from "axios";
@@ -52,11 +57,10 @@ const ProjectBackersPage = () => {
         const res = await fetchUserProjects();
         if (res.data.success) {
           const allProjects = res.data.data || [];
-          // Sắp xếp projects: total-amount > 0 lên đầu, total-amount = 0 xuống cuối
           const sortedProjects = allProjects.sort((a, b) => {
             if (a["total-amount"] > 0 && b["total-amount"] === 0) return -1;
             if (a["total-amount"] === 0 && b["total-amount"] > 0) return 1;
-            return 0; // Giữ nguyên thứ tự nếu cả hai đều > 0 hoặc đều = 0
+            return 0;
           });
           setProjects(sortedProjects);
           setFilteredProjects(sortedProjects);
@@ -116,7 +120,6 @@ const ProjectBackersPage = () => {
     }
   };
 
-  // Handle Excel export
   const handleExportToExcel = async (projectId, projectTitle) => {
     try {
       const response = await exportPledgesToExcel(projectId);
@@ -141,7 +144,6 @@ const ProjectBackersPage = () => {
     }
   };
 
-  // Show confirmation modal for Excel export
   const showDownloadConfirm = (projectId, projectTitle) => {
     confirm({
       title: "Do you want to download the backer list?",
@@ -155,30 +157,59 @@ const ProjectBackersPage = () => {
     });
   };
 
-  // Get project status tag
   const getStatusTag = (status) => {
     switch (status) {
-      case "VISIBLE":
-        return <Tag color="blue">Visible</Tag>;
-      case "INVISIBLE":
-        return <Tag color="gray">Invisible</Tag>;
-      case "HALTED":
-        return <Tag color="red">Halted</Tag>;
+      case "APPROVED":
+      case "ONGOING":
+        return (
+          <Tag icon={<ClockCircleOutlined />} color="blue">
+            {status}
+          </Tag>
+        );
+      case "SUCCESSFUL":
+        return (
+          <Tag icon={<CheckCircleOutlined />} color="green">
+            SUCCESSFUL
+          </Tag>
+        );
+      case "TRANSFERRED":
+        return (
+          <Tag icon={<DollarOutlined />} color="cyan">
+            TRANSFERRED
+          </Tag>
+        );
+      case "INSUFFICIENT":
+      case "REFUNDED":
+        return (
+          <Tag icon={<InfoCircleOutlined />} color="orange">
+            {status}
+          </Tag>
+        );
+      case "CREATED":
+      case "REJECTED":
+      case "SUBMITTED":
+        return (
+          <Tag icon={<EyeInvisibleOutlined />} color="default">
+            {status}
+          </Tag>
+        );
       case "DELETED":
-        return <Tag color="red">Deleted</Tag>;
+        return (
+          <Tag icon={<DeleteOutlined />} color="red">
+            DELETED
+          </Tag>
+        );
       default:
-        return <Tag color="default">{status}</Tag>;
+        return <Tag color="gray">{status}</Tag>;
     }
   };
 
-  // Calculate backer statistics
   const totalBackers = backers.length;
   const totalPledged = backers.reduce(
     (sum, backer) => sum + backer["total-amount"],
     0
   );
 
-  // Table columns for backers
   const columns = [
     {
       title: "Backer ID",
@@ -329,18 +360,20 @@ const ProjectBackersPage = () => {
               >
                 <Row gutter={[16, 16]}>
                   <Col xs={24} sm={24} md={8} lg={6}>
-                    <Image
-                      alt={project.title}
-                      src={project.thumbnail}
-                      style={{
-                        width: "100%",
-                        height: 180,
-                        objectFit: "cover",
-                        borderRadius: 4,
-                      }}
-                      preview={false}
-                      fallback={placeholder}
-                    />
+                    <div style={{ height: 180, overflow: "hidden" }}>
+                      <Image
+                        alt={project.title}
+                        src={project.thumbnail}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          borderRadius: 4,
+                        }}
+                        preview={false}
+                        fallback={placeholder}
+                      />
+                    </div>
                   </Col>
                   <Col xs={24} sm={24} md={16} lg={18}>
                     <Space
@@ -357,28 +390,12 @@ const ProjectBackersPage = () => {
                       </Text>
                       <Text type="secondary">
                         End Date:{" "}
-                        {dayjs(project["end-datetime"]).format("MMM D, YYYY")}
+                        {project["end-datetime"]
+                          ? dayjs(project["end-datetime"]).format("MMM D, YYYY")
+                          : "N/A"}
                       </Text>
                       <Text type="secondary">
                         Status: {getStatusTag(project.status)}
-                      </Text>
-                      <Text type="secondary">
-                        Transaction Status:{" "}
-                        <Tag
-                          color={
-                            project["transaction-status"] === "PENDING"
-                              ? "gold"
-                              : project["transaction-status"] === "RECEIVING"
-                              ? "green"
-                              : project["transaction-status"] === "TRANSFERRED"
-                              ? "blue"
-                              : project["transaction-status"] === "REFUNDED"
-                              ? "red"
-                              : "default"
-                          }
-                        >
-                          {project["transaction-status"] || "N/A"}
-                        </Tag>
                       </Text>
                       <Button
                         type="primary"

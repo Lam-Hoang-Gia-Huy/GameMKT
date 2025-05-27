@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchUserProjects, deleteProject } from "../api/apiClient";
+import {
+  fetchUserProjects,
+  deleteProject,
+  submitProject,
+} from "../api/apiClient";
 import {
   Button,
   Table,
@@ -12,16 +16,24 @@ import {
   Input,
   Select,
   DatePicker,
+  Form,
+  Tag,
 } from "antd";
-import placeholder from "../assets/placeholder-1-1-1.png";
-import RewardList from "../components/MyProjectListPage/RewardList";
 import {
   EditOutlined,
   DeleteOutlined,
   ExclamationCircleOutlined,
   ProjectOutlined,
   SearchOutlined,
+  SendOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  DollarOutlined,
+  InfoCircleOutlined,
+  EyeInvisibleOutlined,
 } from "@ant-design/icons";
+import placeholder from "../assets/placeholder-1-1-1.png";
+import RewardList from "../components/MyProjectListPage/RewardList";
 import moment from "moment";
 
 const { confirm } = Modal;
@@ -36,8 +48,10 @@ const MyProjectList = () => {
   const [expandedRowKeys, setExpandedRowKeys] = useState([]);
   const [searchName, setSearchName] = useState("");
   const [projectStatusFilter, setProjectStatusFilter] = useState(null);
-  const [transactionStatusFilter, setTransactionStatusFilter] = useState(null);
   const [dateRange, setDateRange] = useState([null, null]);
+  const [isSubmitModalVisible, setIsSubmitModalVisible] = useState(false);
+  const [submittingProjectId, setSubmittingProjectId] = useState(null);
+  const [form] = Form.useForm();
   const navigate = useNavigate();
 
   const fetchAllProjects = useCallback(async () => {
@@ -60,32 +74,21 @@ const MyProjectList = () => {
     fetchAllProjects();
   }, [fetchAllProjects]);
 
-  // Apply filters whenever search or filter criteria change
   useEffect(() => {
     let filtered = [...projects];
 
-    // Filter by project name
     if (searchName) {
       filtered = filtered.filter((project) =>
         project.title.toLowerCase().includes(searchName.toLowerCase())
       );
     }
 
-    // Filter by project status
     if (projectStatusFilter) {
       filtered = filtered.filter(
         (project) => project.status === projectStatusFilter
       );
     }
 
-    // Filter by transaction status
-    if (transactionStatusFilter) {
-      filtered = filtered.filter(
-        (project) => project["transaction-status"] === transactionStatusFilter
-      );
-    }
-
-    // Filter by date range
     if (dateRange && dateRange[0] && dateRange[1]) {
       filtered = filtered.filter((project) => {
         const endDate = moment(project["end-datetime"]);
@@ -100,13 +103,7 @@ const MyProjectList = () => {
     }
 
     setFilteredProjects(filtered);
-  }, [
-    searchName,
-    projectStatusFilter,
-    transactionStatusFilter,
-    dateRange,
-    projects,
-  ]);
+  }, [searchName, projectStatusFilter, dateRange, projects]);
 
   const handleEdit = useCallback(
     (projectId) => {
@@ -141,6 +138,78 @@ const MyProjectList = () => {
     });
   }, []);
 
+  const handleSubmit = useCallback((projectId) => {
+    setSubmittingProjectId(projectId);
+    setIsSubmitModalVisible(true);
+  }, []);
+
+  const handleSubmitConfirm = async (values) => {
+    try {
+      await submitProject(submittingProjectId, values.note);
+      message.success("Project submitted successfully");
+      setIsSubmitModalVisible(false);
+      form.resetFields();
+      fetchAllProjects(); // Refresh project list
+    } catch (error) {
+      message.error(
+        error.response?.data?.message || "Failed to submit project"
+      );
+    }
+  };
+
+  const getStatusTag = (status) => {
+    switch (status) {
+      case "APPROVED":
+      case "ONGOING":
+        return (
+          <Tag icon={<ClockCircleOutlined />} color="blue">
+            {status}
+          </Tag>
+        );
+      case "SUCCESSFUL":
+        return (
+          <Tag icon={<CheckCircleOutlined />} color="green">
+            SUCCESSFUL
+          </Tag>
+        );
+      case "TRANSFERRED":
+        return (
+          <Tag icon={<DollarOutlined />} color="cyan">
+            TRANSFERRED
+          </Tag>
+        );
+      case "INSUFFICIENT":
+      case "REFUNDED":
+        return (
+          <Tag icon={<InfoCircleOutlined />} color="orange">
+            {status}
+          </Tag>
+        );
+      case "CREATED":
+      case "REJECTED":
+      case "SUBMITTED":
+        return (
+          <Tag icon={<EyeInvisibleOutlined />} color="default">
+            {status}
+          </Tag>
+        );
+      case "DELETED":
+        return (
+          <Tag icon={<DeleteOutlined />} color="red">
+            DELETED
+          </Tag>
+        );
+      case "HALTED":
+        return (
+          <Tag icon={<InfoCircleOutlined />} color="orange">
+            HALTED
+          </Tag>
+        );
+      default:
+        return <Tag color="gray">{status}</Tag>;
+    }
+  };
+
   const columns = useMemo(
     () => [
       {
@@ -173,16 +242,7 @@ const MyProjectList = () => {
         title: "Status",
         dataIndex: "status",
         key: "status",
-        render: (status) => (
-          <span
-            style={{
-              color: status === "VISIBLE" ? "green" : "orange",
-              fontWeight: "bold",
-            }}
-          >
-            {status}
-          </span>
-        ),
+        render: (status) => getStatusTag(status),
       },
       {
         title: "End Date",
@@ -195,28 +255,6 @@ const MyProjectList = () => {
         dataIndex: "total-amount",
         key: "total-amount",
         render: (amount) => `${amount.toLocaleString()}$`,
-      },
-      {
-        title: "Transaction Status",
-        dataIndex: "transaction-status",
-        key: "transaction-status",
-        render: (status) => (
-          <span
-            style={{
-              color:
-                status === "PENDING"
-                  ? "orange"
-                  : status === "RECEIVING"
-                  ? "blue"
-                  : status === "REFUNDED"
-                  ? "red"
-                  : "black",
-              fontWeight: "bold",
-            }}
-          >
-            {status}
-          </span>
-        ),
       },
       {
         title: "Actions",
@@ -237,11 +275,20 @@ const MyProjectList = () => {
             >
               Delete
             </Button>
+            {record.status === "CREATED" && (
+              <Button
+                type="default"
+                icon={<SendOutlined />}
+                onClick={() => handleSubmit(record["project-id"])}
+              >
+                Submit
+              </Button>
+            )}
           </Space>
         ),
       },
     ],
-    [handleEdit, handleDelete]
+    [handleEdit, handleDelete, handleSubmit]
   );
 
   const handleExpand = (expanded, record) => {
@@ -274,19 +321,21 @@ const MyProjectList = () => {
             onChange={(value) => setProjectStatusFilter(value)}
             style={{ width: 200 }}
           >
-            <Option value="VISIBLE">Visible</Option>
-            <Option value="INVISIBLE">Invisible</Option>
-          </Select>
-          <Select
-            placeholder="Filter by transaction status"
-            allowClear
-            onChange={(value) => setTransactionStatusFilter(value)}
-            style={{ width: 300 }}
-          >
-            <Option value="PENDING">Pending</Option>
-            <Option value="RECEIVING">Receiving</Option>
+            <Option value="CREATED">Created</Option>
+            <Option value="APPROVED">Approved</Option>
+            <Option value="REJECTED">Rejected</Option>
+            <Option value="ONGOING">Ongoing</Option>
+            <Option value="SUCCESSFUL">Successful</Option>
+            <Option value="TRANSFERRED">Transferred</Option>
+            <Option value="INSUFFICIENT">Insufficient</Option>
             <Option value="REFUNDED">Refunded</Option>
+            <Option value="DELETED">Deleted</Option>
+            <Option value="SUBMITTED">Submitted</Option>
           </Select>
+          <RangePicker
+            value={dateRange}
+            onChange={(dates) => setDateRange(dates)}
+          />
         </Space>
       </Space>
       <Table
@@ -306,6 +355,30 @@ const MyProjectList = () => {
         }}
         pagination={{ pageSize: 10 }}
       />
+      <Modal
+        title="Submit Project"
+        visible={isSubmitModalVisible}
+        onCancel={() => {
+          setIsSubmitModalVisible(false);
+          form.resetFields();
+        }}
+        footer={null}
+      >
+        <Form form={form} onFinish={handleSubmitConfirm} layout="vertical">
+          <Form.Item
+            name="note"
+            label="Note"
+            rules={[{ required: true, message: "Please input a note!" }]}
+          >
+            <Input placeholder="Enter a note for submission" />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Confirm Submit
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };
