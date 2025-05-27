@@ -260,6 +260,8 @@ const PostManagement = () => {
       title: "Title",
       dataIndex: "title",
       key: "title",
+      width: 200,
+
       ellipsis: true,
       render: (text) => <Text strong>{text}</Text>,
     },

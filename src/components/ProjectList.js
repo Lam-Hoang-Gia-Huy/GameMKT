@@ -117,7 +117,6 @@ const ProjectList = () => {
   const handleFilterSubmit = (values) => {
     const filters = {
       ...values,
-      ProjectStatus: "VISIBLE",
     };
 
     setCurrentPage(1);
@@ -127,7 +126,7 @@ const ProjectList = () => {
   const handleResetFilters = () => {
     form.resetFields();
     setCurrentPage(1);
-    loadProjects({ ProjectStatus: "VISIBLE" }, 1, pageSize);
+    loadProjects(1, pageSize);
   };
 
   const handlePageChange = (page, pageSizeValue) => {
