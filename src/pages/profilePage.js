@@ -154,16 +154,17 @@ const ProfilePage = () => {
       setVerifyLoading(true);
 
       const formData = new FormData();
-      formData.append("phone", values.phone);
-      formData.append("paymentAccount", values.paymentAccount);
+      formData.append("Phone", values.phone);
+      formData.append("PaymentAccount", values.paymentAccount);
 
       const res = await axios.post(
-        "https://marvelous-gentleness-production.up.railway.app/api/User/UpdateUser",
+        "https://marvelous-gentleness-production.up.railway.app/api/User/VerifyUser",
         formData,
         {
           headers: {
             Authorization: `Bearer ${auth.token}`,
             "Content-Type": "multipart/form-data",
+            Accept: "*/*",
           },
         }
       );
