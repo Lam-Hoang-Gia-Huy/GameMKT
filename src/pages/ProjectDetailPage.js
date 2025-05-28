@@ -21,7 +21,12 @@ import {
   BulbOutlined,
   MessageOutlined,
   QuestionCircleOutlined,
-  CalendarOutlined, // Thêm biểu tượng cho ngày
+  CalendarOutlined,
+  CheckCircleOutlined,
+  DollarOutlined,
+  InfoCircleOutlined,
+  EyeInvisibleOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import TipTapViewer from "../components/TipTapViewer";
 import placeholder from "../assets/placeholder-1-1-1.png";
@@ -35,7 +40,7 @@ import {
   fetchCreatorInfo,
 } from "../api/apiClient";
 import useAuth from "../components/Hooks/useAuth";
-import moment from "moment"; // Đảm bảo moment đã được import
+import moment from "moment";
 
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -92,6 +97,59 @@ const ProjectDetailPage = () => {
     fetchProjectData();
   }, [id, auth?.id]);
 
+  const getStatusTag = (status) => {
+    switch (status) {
+      case "APPROVED":
+      case "ONGOING":
+        return (
+          <Tag icon={<ClockCircleOutlined />} color="blue">
+            {status}
+          </Tag>
+        );
+      case "SUCCESSFUL":
+        return (
+          <Tag icon={<CheckCircleOutlined />} color="green">
+            SUCCESSFUL
+          </Tag>
+        );
+      case "TRANSFERRED":
+        return (
+          <Tag icon={<DollarOutlined />} color="cyan">
+            TRANSFERRED
+          </Tag>
+        );
+      case "INSUFFICIENT":
+      case "REFUNDED":
+        return (
+          <Tag icon={<InfoCircleOutlined />} color="orange">
+            {status}
+          </Tag>
+        );
+      case "CREATED":
+      case "REJECTED":
+      case "SUBMITTED":
+        return (
+          <Tag icon={<EyeInvisibleOutlined />} color="default">
+            {status}
+          </Tag>
+        );
+      case "DELETED":
+        return (
+          <Tag icon={<DeleteOutlined />} color="red">
+            DELETED
+          </Tag>
+        );
+      case "HALTED":
+        return (
+          <Tag icon={<InfoCircleOutlined />} color="orange">
+            HALTED
+          </Tag>
+        );
+      default:
+        return <Tag color="gray">{status}</Tag>;
+    }
+  };
+
   const getTimeStatus = () => {
     if (!project) return { text: "", days: 0 };
 
@@ -104,7 +162,7 @@ const ProjectDetailPage = () => {
       return { text: `Starts in ${days} days`, status: "upcoming" };
     } else if (now >= startDate && now <= endDate) {
       const days = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
-      return { text: `${days} days to go`, status: "VISIBLE" };
+      return { text: `${days} days to go`, status: "ongoing" };
     } else {
       return { text: "Funding ended", status: "ended" };
     }
@@ -242,7 +300,10 @@ const ProjectDetailPage = () => {
             }
           />
         </Card>
-      ) : project.status === "INVISIBLE" || project.status === "DELETED" ? (
+      ) : project.status === "CREATED" ||
+        project.status === "REJECTED" ||
+        project.status === "SUBMITTED" ||
+        project.status === "DELETED" ? (
         <Card>
           <Result
             status="warning"
@@ -286,7 +347,9 @@ const ProjectDetailPage = () => {
                   <Title level={2} style={{ marginTop: 8, marginBottom: 4 }}>
                     {project.title}
                   </Title>
+                  <Text>{getStatusTag(project.status)} </Text>
                   <Title level={5}>Description</Title>
+
                   <Paragraph style={{ fontSize: 16 }}>
                     {project.description}
                   </Paragraph>
