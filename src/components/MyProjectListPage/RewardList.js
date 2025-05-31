@@ -242,8 +242,8 @@ const RewardList = ({ projectId, projectStatus }) => {
           style={{ display: "block", marginBottom: 16, fontSize: 15 }}
         >
           <b>Note:</b> Rewards cannot be added, edited, or deleted for this
-          project status. Please contact staff or admin by creating a report to
-          request changes.
+          project status since it has been visibled to the others. Please
+          contact staff or admin by creating a report to request changes.
         </Text>
       )}
       <Button

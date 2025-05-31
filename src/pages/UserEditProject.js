@@ -185,9 +185,9 @@ const UserEditProject = () => {
 
   const handleUpdateBasicInfo = async (values) => {
     try {
+      console.log("Values in handleUpdateBasicInfo:", values);
       setUpdatingBasic(true);
       const payload = {};
-
       const isVisible = !["CREATED", "REJECTED"].includes(projectStatus);
 
       if (isVisible) {

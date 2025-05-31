@@ -332,10 +332,10 @@ const MyProjectList = () => {
             <Option value="DELETED">Deleted</Option>
             <Option value="SUBMITTED">Submitted</Option>
           </Select>
-          <RangePicker
+          {/* <RangePicker
             value={dateRange}
             onChange={(dates) => setDateRange(dates)}
-          />
+          /> */}
         </Space>
       </Space>
       <Table
