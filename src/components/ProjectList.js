@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Row,
   Col,
@@ -24,6 +24,19 @@ import {
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 const { Panel } = Collapse;
+
+// Helper function to format date to YYYY-MM-DDTHH:mm:ss in local time
+const formatDateToLocal = (date) => {
+  if (!date) return undefined;
+  const pad = (num) => String(num).padStart(2, "0");
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1); // Months are 0-based
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  const seconds = pad(date.getSeconds());
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+};
 
 const ProjectList = () => {
   const [projects, setProjects] = useState([]);
@@ -80,9 +93,28 @@ const ProjectList = () => {
       try {
         setLoading(true);
 
-        const defaultFilters = {
-          ...filters,
-        };
+        // Ensure filters are clean and remove undefined/null values
+        const defaultFilters = Object.fromEntries(
+          Object.entries({
+            Title: filters.Title?.trim(),
+            CategoryIds: filters.CategoryIds?.length
+              ? filters.CategoryIds
+              : undefined,
+            PlatformIds: filters.PlatformIds?.length
+              ? filters.PlatformIds
+              : undefined,
+            StartDatetimeRange: filters.StartDatetimeRange
+              ? [
+                  formatDateToLocal(filters.StartDatetimeRange[0]?.toDate()),
+                  formatDateToLocal(filters.StartDatetimeRange[1]?.toDate()),
+                ]
+              : undefined,
+            MinMinimumAmount: filters.MinMinimumAmount,
+            MaxMinimumAmount: filters.MaxMinimumAmount,
+            MinTotalAmount: filters.MinTotalAmount,
+            MaxTotalAmount: filters.MaxTotalAmount,
+          }).filter(([_, value]) => value !== undefined && value !== null)
+        );
 
         const projectsResponse = await fetchProjects(
           defaultFilters,
@@ -126,7 +158,7 @@ const ProjectList = () => {
   const handleResetFilters = () => {
     form.resetFields();
     setCurrentPage(1);
-    loadProjects(1, pageSize);
+    loadProjects({}, 1, pageSize);
   };
 
   const handlePageChange = (page, pageSizeValue) => {
@@ -166,10 +198,10 @@ const ProjectList = () => {
   return (
     <div>
       <Collapse
-        defaultActiveKey={[]} // Mặc định đóng
+        defaultActiveKey={[]}
         style={{ marginBottom: 20 }}
         expandIconPosition="end"
-        onChange={handleCollapseChange} // Gọi khi mở/đóng Collapse
+        onChange={handleCollapseChange}
       >
         <Panel header="Filter Projects" key="1">
           <Form
@@ -198,7 +230,7 @@ const ProjectList = () => {
                     showSearch
                     optionFilterProp="children"
                     style={{ width: "100%" }}
-                    loading={!isFilterLoaded} // Hiển thị loading khi chưa tải categories
+                    loading={!isFilterLoaded}
                   >
                     {categories.map((category) => (
                       <Option
@@ -221,7 +253,7 @@ const ProjectList = () => {
                     showSearch
                     optionFilterProp="children"
                     style={{ width: "100%" }}
-                    loading={!isFilterLoaded} // Hiển thị loading khi chưa tải platforms
+                    loading={!isFilterLoaded}
                   >
                     {platforms.map((platform) => (
                       <Option
@@ -235,11 +267,11 @@ const ProjectList = () => {
                 </Form.Item>
               </Col>
 
-              <Col xs={24} sm={12} md={6}>
+              {/* <Col xs={24} sm={12} md={6}>
                 <Form.Item name="StartDatetimeRange" label="Start Date Range">
                   <RangePicker style={{ width: "100%" }} />
                 </Form.Item>
-              </Col>
+              </Col> */}
             </Row>
 
             <Row gutter={[16, 16]}>
