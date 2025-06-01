@@ -300,10 +300,7 @@ const ProjectDetailPage = () => {
             }
           />
         </Card>
-      ) : project.status === "CREATED" ||
-        project.status === "REJECTED" ||
-        project.status === "SUBMITTED" ||
-        project.status === "DELETED" ? (
+      ) : project.status === "DELETED" ? (
         <Card>
           <Result
             status="warning"
